@@ -46,6 +46,7 @@ function updateDb() {
         console.log(`Updated db!`);
 		db = resp.data;
     }).catch(() => {
-		db = require("./db.json");
+		console.log("Fetching db failed, pls fix! REEEEEEEEEEEEEEEEEEEEEEEE!");
+        db = require("./db.json");
 	});
 }
