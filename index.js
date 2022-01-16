@@ -6,7 +6,7 @@ const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
 
-var db = require("./db.json");
+var db = {};
 
 bot.on('ready', () => {
 	console.log(`Logged in as ${bot.user.tag}`);
@@ -44,5 +44,7 @@ function updateDb() {
         fs.writeFileSync('./db.json', JSON.stringify(resp.data));
         console.log(`Updated db!`);
 		db = resp.data;
-    });
+    }).catch(() => {
+		db = require("./db.json");
+	});
 }
