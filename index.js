@@ -17,6 +17,7 @@ bot.on('ready', () => {
 
 
 bot.on("messageCreate", (msg) => {
+	if(msg.author.bot) return;
 	if(db.some(link => msg.content.includes(link))) {
 		console.log("fuck there goes another scammy boi");
         msg.delete().catch(() => {});
