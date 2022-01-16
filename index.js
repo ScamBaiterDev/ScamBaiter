@@ -20,9 +20,11 @@ bot.on("messageCreate", (msg) => {
 	if(db.some(link => msg.content.includes(link))) {
 		console.log("fuck there goes another scammy boi");
         msg.delete().catch(() => {});
-        if(msg.member.bannable) {
-			msg.member.ban( { "reason": "AntiScam - Softban"} ).then((mem) => {
-				mem.guild.bans.remove(mem.user, "AntiScam - Softban");
+        if(msg.member.bannable && msg.member.permissions.has("KICK_MEMBERS")) {
+			msg.author.send(config.discord.banMsg).finally(() => {
+				msg.member.ban( { "reason": "AntiScam - Softban"} ).then((mem) => {
+					mem.guild.bans.remove(mem.user, "AntiScam - Softban");
+				}).catch(() => {});
 			}).catch(() => {});
 		}
 	}
