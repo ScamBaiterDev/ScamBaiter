@@ -10,16 +10,18 @@ const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
 
-
+var reportChannel = null;
 var db = {};
 
 bot.on('ready', () => {
 	console.log(`Logged in as ${bot.user.tag}`);
-	bot.user.setPresence(config.discord.status)
+	bot.user.setPresence(config.discord.status);
+	bot.channels.fetch(config.discord.reportChannel).then((channel) => {
+		reportChannel = channel
+	})
 	updateDb();
 	setInterval(updateDb, 1000 * 30 * 60);
 });
-
 
 bot.on("messageCreate", (msg) => {
 	if (msg.author.bot) return;
@@ -30,6 +32,32 @@ bot.on("messageCreate", (msg) => {
 			msg.content.replace('\n', ' ').split(' ').forEach(x => {
 				// console.log(url.parse(x).hostname)
 				if (url.parse(x).hostname && db.includes(url.parse(x).hostname)) {
+					reportChannel.send({
+						"embeds": [{
+							"color": null,
+							"fields": [{
+									"name": "User",
+									"value": `${msg.author} (${msg.author.tag})\nID: ${msg.author.id}`
+								},
+								{
+									"name": "Message",
+									"value": msg.content
+								},
+								{
+									"name": "URL",
+									"value": url.parse(x).hostname
+								}
+							],
+							"author": {
+								"name": msg.guild.name,
+								"icon_url": msg.guild.iconURL()
+							},
+							"timestamp": new Date(),
+							"thumbnail": {
+								"url": msg.author.avatarURL()
+							}
+						}]
+					})
 					console.log(url.parse(x).hostname);
 					console.log("fuck there goes another scammy boi");
 					msg.delete().catch(() => {});
@@ -62,8 +90,7 @@ bot.on("messageCreate", (msg) => {
 				msg.channel.send({
 					embeds: [{
 						"title": "Bot Info",
-						"fields": [
-							{
+						"fields": [{
 								"inline": false,
 								"name": "System Information",
 								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.freemem())}/${xbytes(os.totalmem())}`
