@@ -42,6 +42,10 @@ bot.on("messageCreate", (msg) => {
 				msg.channel.send({
 					embeds: [
 						{
+							"title": "Bot Info",
+							"footer": {
+								"text": "This message will self destruct in 10 seconds"
+							},
 							"fields": [
 								{
 									"inline": true,
@@ -61,6 +65,11 @@ bot.on("messageCreate", (msg) => {
 							]
 						}
 					]
+				}).then((msg1) => {
+					setTimeout(() => {
+						msg.delete();
+						msg1.delete();
+					}, 10000)
 				}).catch((err) => { console.log(err) });
 			break;
 		}
