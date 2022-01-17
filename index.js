@@ -72,7 +72,7 @@ bot.login(config.discord.token);
 
 function updateDb() {
 	//get
-	axios.get('https://phish.sinking.yachts/v2/all', {
+	axios.get(config.scamApi, {
 		headers: {
 			'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158'
 			// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
