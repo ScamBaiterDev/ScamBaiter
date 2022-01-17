@@ -1,5 +1,7 @@
 const startup = new Date();
 const url = require("url");
+const os = require("os");
+const xbytes = require("xbytes");
 const Discord = require("discord.js");
 const axios = require("axios").default;
 const fs = require("fs");
@@ -21,6 +23,7 @@ bot.on('ready', () => {
 
 bot.on("messageCreate", (msg) => {
 	if (msg.author.bot) return;
+	if (msg.channel.type == "DM") return;
 	db.forEach(x => {
 		if (msg.content.includes("https://" + x) || msg.content.includes("http://" + x)) {
 			// console.log(x);
@@ -62,7 +65,13 @@ bot.on("messageCreate", (msg) => {
 						"footer": {
 							"text": "This message will self destruct in 10 seconds"
 						},
-						"fields": [{
+						"fields": [
+							{
+								"inline": false,
+								"name": "System Information",
+								"value": `Hostname: ${os.hostname()}\nPlatform: ${os.platform}\nTotal Memory: ${xbytes(os.totalmem())}`
+							},
+							{
 								"inline": true,
 								"name": "Guilds",
 								"value": bot.guilds.cache.size.toString()

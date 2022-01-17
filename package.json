@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ChrisChrome/ScamBaiter#readme",
   "dependencies": {
     "axios": "^0.24.0",
-    "discord.js": "^13.6.0"
+    "discord.js": "^13.6.0",
+    "xbytes": "^1.7.0"
   }
 }
