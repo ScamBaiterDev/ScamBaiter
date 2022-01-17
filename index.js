@@ -62,14 +62,11 @@ bot.on("messageCreate", (msg) => {
 				msg.channel.send({
 					embeds: [{
 						"title": "Bot Info",
-						"footer": {
-							"text": "This message will self destruct in 10 seconds"
-						},
 						"fields": [
 							{
 								"inline": false,
 								"name": "System Information",
-								"value": `Hostname: ${os.hostname()}\nPlatform: ${os.platform}\nTotal Memory: ${xbytes(os.totalmem())}`
+								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
 								"inline": true,
@@ -88,11 +85,6 @@ bot.on("messageCreate", (msg) => {
 							}
 						]
 					}]
-				}).then((msg1) => {
-					setTimeout(() => {
-						msg.delete();
-						msg1.delete();
-					}, 10000)
 				}).catch((err) => {
 					console.log(err)
 				});
