@@ -61,7 +61,7 @@ bot.on("messageCreate", (msg) => {
 							]
 						}
 					]
-				})
+				}).catch((err) => { console.log(err) });
 			break;
 		}
 	}
