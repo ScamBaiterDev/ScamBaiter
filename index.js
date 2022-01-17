@@ -25,7 +25,7 @@ bot.on("messageCreate", (msg) => {
         msg.delete().catch(() => {});
         if(msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
 			msg.author.send(config.discord.banMsg).finally(() => {
-				msg.member.ban( { "reason": "AntiScam - Softban"} ).then((mem) => {
+				msg.member.ban( { "reason": "AntiScam - Softban", "days": 1} ).then((mem) => {
 					mem.guild.bans.remove(mem.user, "AntiScam - Softban");
 				}).catch((err) => {console.error(err)});
 			}).catch((err) => {console.error(err)});
