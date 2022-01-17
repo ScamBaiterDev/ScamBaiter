@@ -69,19 +69,9 @@ bot.on("messageCreate", (msg) => {
 								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
-								"inline": true,
-								"name": "Guilds",
-								"value": bot.guilds.cache.size.toString()
-							},
-							{
-								"inline": true,
-								"name": "Current DB size",
-								"value": db.length.toString()
-							},
-							{
-								"inline": true,
-								"name": "Startup Time",
-								"value": `<t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>`
+								"inline": false,
+								"name": "Bot Info",
+								"value": `Guild Count: ${bot.guilds.cache.size.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>`
 							}
 						]
 					}]
