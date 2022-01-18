@@ -9,7 +9,7 @@ const config = require("./config.json");
 const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
-
+// test
 var reportChannel = null;
 var db = {};
 
