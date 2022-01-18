@@ -8,7 +8,7 @@
 				"name": "for scammers"
 			}]
 		},
-		"banMsg": "You got softbanned for sending a scam link!",
+		"banMsg": "You got softbanned from {guild} for sending a scam link!",
 		"reportChannel": "channel ID here"
 	},
 	"owners": ["put your user ID here"],
