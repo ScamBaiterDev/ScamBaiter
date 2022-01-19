@@ -93,7 +93,7 @@ bot.on("messageCreate", (msg) => {
 						"fields": [{
 								"inline": false,
 								"name": "System Information",
-								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.freemem())}/${xbytes(os.totalmem())}`
+								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem()-os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
 								"inline": false,
