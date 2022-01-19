@@ -24,6 +24,10 @@ bot.on('ready', () => {
 });
 
 bot.on("messageCreate", (msg) => {
+	
+	console.log(msg.content) // A couple bots keep slipping through the cracks, the domain is known to be in the database, so idfk why it's not triggering
+	// EMERGENCY DEBUG STUFF
+	
 	if (msg.author.bot) return;
 	if (msg.channel.type == "DM") return;
 	db.forEach(x => {
