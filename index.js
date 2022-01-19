@@ -106,6 +106,9 @@ bot.on("messageCreate", (msg) => {
 					console.log(err)
 				});
 				break;
+			case "invite":
+				msg.reply(config.inviteMsg);
+				break;
 		}
 	}
 });
