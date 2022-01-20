@@ -25,7 +25,7 @@ bot.on('ready', () => {
 
 bot.on("messageCreate", (msg) => {
 	
-	console.log(msg.content) // A couple bots keep slipping through the cracks, the domain is known to be in the database, so idfk why it's not triggering
+	// console.log(msg.content) // A couple bots keep slipping through the cracks, the domain is known to be in the database, so idfk why it's not triggering
 	// EMERGENCY DEBUG STUFF
 	
 	if (msg.author.bot) return;
