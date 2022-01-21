@@ -91,14 +91,13 @@ bot.on("messageCreate", (msg) => {
 	if (msg.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
-				if (!config.owners.includes(msg.author.id)) return;
 				msg.channel.send({
 					embeds: [{
 						"title": "Bot Info",
 						"fields": [{
 								"inline": false,
 								"name": "System Information",
-								"value": `Hostname: ${os.hostname()}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem()-os.freemem())}/${xbytes(os.totalmem())}`
+								"value": `Hostname: ${config.owners.includes(msg.author.id)?os.hostname():"••••••••"}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem()-os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
 								"inline": false,
