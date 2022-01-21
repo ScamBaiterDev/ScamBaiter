@@ -6,6 +6,7 @@ const Discord = require("discord.js");
 const axios = require("axios").default;
 const fs = require("fs");
 const config = require("./config.json");
+const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0,6)
 const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
@@ -94,6 +95,9 @@ bot.on("messageCreate", (msg) => {
 				msg.channel.send({
 					embeds: [{
 						"title": "Bot Info",
+						"footer": {
+							"text": `Commit ${revision}`
+						},
 						"fields": [{
 								"inline": false,
 								"name": "System Information",
