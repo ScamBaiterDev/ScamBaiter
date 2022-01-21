@@ -10,6 +10,7 @@ const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
 
+var lastUpdate = null;
 var reportChannel = null;
 var db = {};
 
@@ -20,7 +21,7 @@ bot.on('ready', () => {
 		reportChannel = channel
 	})
 	updateDb();
-	setInterval(updateDb, 1000 * 30 * 60);
+	setInterval(() => {updateDb()}, 1000 * 30 * 60);
 });
 
 bot.on("messageCreate", (msg) => {
@@ -102,13 +103,35 @@ bot.on("messageCreate", (msg) => {
 							{
 								"inline": false,
 								"name": "Bot Info",
-								"value": `Guild Count: ${bot.guilds.cache.size.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>`
+								"value": `Guild Count: ${bot.guilds.cache.size.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime()/1000)}:R>`
 							}
 						]
 					}]
 				}).catch((err) => {
 					console.log(err)
 				});
+				break;
+			case "update":
+				if(!config.owners.includes(msg.author.id)) return;
+				msg.channel.send("Updating...").then((msg1) => {
+					// Tried to find a better way of doing this, particularly making updateDb() into a promise, but it didn't wanna work, will work on it over time
+					axios.get(config.scamApi, {
+						headers: {
+							'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158'
+							// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
+						}
+					}).then((resp) => {
+						fs.writeFileSync('./db.json', JSON.stringify(resp.data));
+						console.log(`Updated db!`);
+						db = resp.data;
+						lastUpdate = new Date();
+						msg1.edit(`Updated! \`Size: ${db.length.toString()}\``);
+					}).catch(() => {
+						console.log("Failed to fetch database!");
+						db = require("./db.json");
+						msg1.edit("Failed to update!");
+					});
+				})
 				break;
 			case "invite":
 				msg.reply(config.inviteMsg);
@@ -119,8 +142,7 @@ bot.on("messageCreate", (msg) => {
 
 bot.login(config.discord.token);
 
-
-function updateDb() {
+const updateDb = () => {
 	//get
 	axios.get(config.scamApi, {
 		headers: {
@@ -131,8 +153,9 @@ function updateDb() {
 		fs.writeFileSync('./db.json', JSON.stringify(resp.data));
 		console.log(`Updated db!`);
 		db = resp.data;
+		lastUpdate = new Date();
 	}).catch(() => {
-		console.log("Fetching db failed, pls fix! REEEEEEEEEEEEEEEEEEEEEEEE!");
+		console.log("Failed to fetch database!");
 		db = require("./db.json");
 	});
 }
