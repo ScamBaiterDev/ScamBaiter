@@ -149,6 +149,7 @@ const updateDb = () => {
 	//get
 	axios.get(config.scamApi, {
 		headers: {
+			'X-Identity': 'github.com/ChrisChrome/ScamBaiter',
 			'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158'
 			// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
 		}
