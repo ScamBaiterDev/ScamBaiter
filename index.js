@@ -35,7 +35,9 @@ bot.on("messageCreate", (msg) => {
 	db.forEach(x => {
 		if (msg.content.includes("https://" + x) || msg.content.includes("http://" + x)) {
 			// console.log(x);
-			msg.content.replace('\n', ' ').split(' ').forEach(x => {
+			console.log(msg.content.replaceAll("<","").replaceAll(">","").replace('\\n', ' ').split(' '))
+			msg.content.replace('\n', ' ').replaceAll("<","").replaceAll(">","").split(' ').forEach(x => {
+				x = x.replaceAll("\n", "");
 				// console.log(url.parse(x).hostname)
 				if (url.parse(x).hostname && db.includes(url.parse(x).hostname)) {
 					reportChannel.send({
