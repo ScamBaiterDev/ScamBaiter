@@ -6,7 +6,7 @@ const Discord = require("discord.js");
 const axios = require("axios").default;
 const fs = require("fs");
 const config = require("./config.json");
-const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0,6)
+const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0, 6)
 const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
@@ -22,24 +22,19 @@ bot.on('ready', () => {
 		reportChannel = channel
 	})
 	updateDb();
-	setInterval(() => {updateDb()}, 1000 * 30 * 60);
+	setInterval(() => {
+		updateDb()
+	}, 1000 * 30 * 60);
 });
 
 bot.on("messageCreate", (msg) => {
-	
-	// console.log(msg.content) // A couple bots keep slipping through the cracks, the domain is known to be in the database, so idfk why it's not triggering
-	// EMERGENCY DEBUG STUFF
-	
 	if (msg.author.bot) return;
 	if (msg.channel.type == "DM") return;
 	db.forEach(x => {
-		if (msg.content.includes("https://" + x) || msg.content.includes("http://" + x)) {
-			// console.log(x);
-			console.log(msg.content.replaceAll("<","").replaceAll(">","").replace('\\n', ' ').split(' '))
-			msg.content.replace('\n', ' ').replaceAll("<","").replaceAll(">","").split(' ').forEach(x => {
-				x = x.replaceAll("\n", "");
-				// console.log(url.parse(x).hostname)
-				if (url.parse(x).hostname && db.includes(url.parse(x).hostname)) {
+		let urls = msg.content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g)
+		if (urls) {
+			urls.forEach(y => {
+				if (url.parse(y).hostname == x) {
 					reportChannel.send({
 						"embeds": [{
 							"color": null,
@@ -53,7 +48,7 @@ bot.on("messageCreate", (msg) => {
 								},
 								{
 									"name": "URL",
-									"value": url.parse(x).hostname
+									"value": y
 								}
 							],
 							"author": {
@@ -66,8 +61,6 @@ bot.on("messageCreate", (msg) => {
 							}
 						}]
 					})
-					console.log(url.parse(x).hostname);
-					console.log("fuck there goes another scammy boi");
 					msg.delete().catch(() => {});
 					if (msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
 						msg.author.send(config.discord.banMsg.replace("{guild}", msg.guild.name)).finally(() => {
@@ -84,7 +77,7 @@ bot.on("messageCreate", (msg) => {
 						});
 					}
 				}
-			});
+			})
 		}
 	})
 	// Funky debug commands
@@ -117,7 +110,7 @@ bot.on("messageCreate", (msg) => {
 				});
 				break;
 			case "update":
-				if(!config.owners.includes(msg.author.id)) return;
+				if (!config.owners.includes(msg.author.id)) return;
 				msg.channel.send("Updating...").then((msg1) => {
 					// Tried to find a better way of doing this, particularly making updateDb() into a promise, but it didn't wanna work, will work on it over time
 					axios.get(config.scamApi, {
