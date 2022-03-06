@@ -64,11 +64,14 @@ bot.on("messageCreate", (msg) => {
 					msg.delete().catch(() => {});
 					if (msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
 						msg.author.send(config.discord.banMsg.replace("{guild}", msg.guild.name)).finally(() => {
+							if(msg.member.ban == null) return;
 							msg.member.ban({
 								"reason": "AntiScam - Softban",
 								"days": 1
 							}).then((mem) => {
-								mem.guild.bans.remove(mem.user, "AntiScam - Softban");
+								setTimeout(() => {
+									mem.guild.bans.remove(mem.user, "AntiScam - Softban");
+								}, 500);
 							}).catch((err) => {
 								console.error(err)
 							});
