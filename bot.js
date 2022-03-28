@@ -97,27 +97,29 @@ bot.on("messageCreate", (msg) => {
 	if (msg.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
-				msg.channel.send({
-					embeds: [{
-						"title": "Bot Info",
-						"footer": {
-							"text": `Commit ${revision}`
-						},
-						"fields": [{
-								"inline": false,
-								"name": "System Information",
-								"value": `Hostname: ${config.owners.includes(msg.author.id)?os.hostname():"••••••••"}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem()-os.freemem())}/${xbytes(os.totalmem())}`
+				bot.shard.fetchClientValues('guilds.cache.size').then((value) => {
+					msg.channel.send({
+						embeds: [{
+							"title": "Bot Info",
+							"footer": {
+								"text": `Commit ${revision}`
 							},
-							{
-								"inline": false,
-								"name": "Bot Info",
-								"value": `Guild Count: ${bot.shard.fetchClientValues('guilds.cache.size').toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime()/1000)}:R>`
-							}
-						]
-					}]
-				}).catch((err) => {
-					console.log(err)
-				});
+							"fields": [{
+									"inline": false,
+									"name": "System Information",
+									"value": `Hostname: ${config.owners.includes(msg.author.id)?os.hostname():"••••••••"}\nStarted <t:${Math.floor(new Date()/1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem()-os.freemem())}/${xbytes(os.totalmem())}`
+								},
+								{
+									"inline": false,
+									"name": "Bot Info",
+									"value": `Guild Count: ${value.reduce((a, b) => a + b, 0).toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime()/1000)}:R>`
+								}
+							]
+						}]
+					}).catch((err) => {
+						console.log(err)
+					});
+				})
 				break;
 			case "update":
 				if (!config.owners.includes(msg.author.id)) return;
