@@ -111,7 +111,7 @@ bot.on("messageCreate", (msg) => {
 							{
 								"inline": false,
 								"name": "Bot Info",
-								"value": `Guild Count: ${bot.guilds.cache.size.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime()/1000)}:R>`
+								"value": `Guild Count: ${bot.shard.fetchClientValues('guilds.cache.size').toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime()/1000)}:D> <t:${Math.floor(startup.getTime()/1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime()/1000)}:R>`
 							}
 						]
 					}]
