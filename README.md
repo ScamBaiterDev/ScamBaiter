@@ -1,7 +1,8 @@
+[![Add To Discord](https://img.shields.io/badge/-Add%20To%20Discord-7289DA?logo=discord&logoColor=fff&style=for-the-badge)](https://discord.com/api/oauth2/authorize?client_id=932391527601287178&permissions=75797&scope=bot) [![Discord](https://img.shields.io/discord/932392800471879740?color=7289DA%20&label=Join%20our%20Discord&logo=discord&logoColor=fff&style=for-the-badge)](https://discord.gg/D29TwNNm4g)
 # ScamBaiter
 A simple "add it and forget it" bot to automatically delete known scam links!
 
-If you don't want to self-host the bot, you can add it [here](https://discord.com/api/oauth2/authorize?client_id=932391527601287178&permissions=11269&scope=bot)
+If you don't want to self-host the bot, you can add it [here](https://discord.com/api/oauth2/authorize?client_id=932391527601287178&permissions=75797&scope=bot)
 
 Support for the bot, both self-hosted or not, can be found on our [Discord](https://discord.gg/D29TwNNm4g)
 
