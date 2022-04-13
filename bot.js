@@ -13,7 +13,7 @@ const bot = new Discord.Client({
 
 var lastUpdate = null;
 var reportChannel = null;
-var db = {};
+var db = []
 
 process.on("message", msg => {
 	if (!msg.type) return false;
