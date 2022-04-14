@@ -5,6 +5,7 @@ const xbytes = require("xbytes");
 const Discord = require("discord.js");
 const axios = require("axios").default;
 const fs = require("fs");
+const WebSocket = require("ws")
 const config = require("./config.json");
 const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0, 6)
 const bot = new Discord.Client({
@@ -26,6 +27,20 @@ process.on("message", msg => {
 
 bot.on('ready', () => {
 	console.log(`Logged in as ${bot.user.tag}`);
+	// Gonna try logging some websocket data for future implementation
+	const sock = new WebSocket("wss://phish.sinking.yachts/feed", {
+		headers: {
+			'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
+			'X-Identity': 'ScamBaiter/1.0; Chris Chrome#9158'
+		}
+	})
+	sock.onopen = () => {
+		console.log("Connected to WS");
+	}
+
+	sock.onmessage = (e) => {
+		JSON.parse(e.data)
+	}
 	bot.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel
 	})
@@ -36,7 +51,12 @@ bot.on('ready', () => {
 });
 bot.on("messageCreate", (msg) => {
 	if (msg.author.bot) return;
-	if (msg.channel.type == "DM") return;
+	const prefix = "$";
+	const args = msg.content.slice(prefix.length).trim().split(/ +/g);
+	const cmd = args.shift().toLowerCase();
+	if (msg.channel.type == "DM") {
+		return; // For future DM only commands
+	};
 	db.forEach(x => {
 		let urls = msg.content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g)
 		if (urls) {
@@ -91,9 +111,6 @@ bot.on("messageCreate", (msg) => {
 		}
 	})
 	// Funky debug commands
-	const prefix = "$";
-	const args = msg.content.slice(prefix.length).trim().split(/ +/g);
-	const cmd = args.shift().toLowerCase();
 	if (msg.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
@@ -145,6 +162,21 @@ bot.on("messageCreate", (msg) => {
 				break;
 			case "invite":
 				msg.reply(config.inviteMsg);
+				break;
+			case "check":
+				if (!args[0]) return msg.reply(`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``);
+				msg.reply("Checking...").then(msg1 => {
+					axios.get(`https://phish.sinking.yachts/v2/check/${args[0]}`, {
+						headers: {
+							'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158'
+							// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
+						}
+					}).then((resp) => {
+						msg1.edit(resp.data.toString());
+					})
+				}).catch(() => {
+					msg1.edit("An error occurred while checking that domain name!\nTry again later")
+				});
 				break;
 		}
 	}
