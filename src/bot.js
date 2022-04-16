@@ -66,7 +66,7 @@ client.on("messageCreate", async (message) => {
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
 		let URLs = message.content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g);
-		if (URLs === null || URLs === undefined) return;
+		if (URLs === null || URLs === undefined) break;
 		if (URLs.includes(URL)) {
 			reportChannel.send({
 				"embeds": [{
