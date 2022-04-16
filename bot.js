@@ -172,7 +172,7 @@ bot.on("messageCreate", (msg) => {
 							// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
 						}
 					}).then((resp) => {
-						msg1.edit(`${args[0]} is ${resp.data?"":"not"}a scam.`);
+						msg1.edit(`${args[0]} is ${resp.data?"":"not "}a scam.`);
 					})
 				}).catch(() => {
 					msg1.edit("An error occurred while checking that domain name!\nTry again later")
