@@ -1,9 +1,8 @@
-const {
-	ShardingManager
-} = require('discord.js');
-const config = require("./config.json");
+const { ShardingManager } = require('discord.js');
+const { discord } = require("../config.json");
+
 const manager = new ShardingManager('./bot.js', {
-	token: config.discord.token
+	token: discord.token
 });
 
 manager.on('shardCreate', shard => {
@@ -14,10 +13,10 @@ manager.on('shardCreate', shard => {
 		shard.send({
 			type: "activity",
 			data: {
-				status: config.discord.status.status,
+				status: discord.status.status,
 				activities: [{
-					type: config.discord.status.activities[0].type,
-					name: `${config.discord.status.activities[0].name} | Shard ${shard.id.toString()}`
+					type: discord.status.activities[0].type,
+					name: `${discord.status.activities[0].name} | Shard ${shard.id.toString()}`
 				}]
 			}
 		});
