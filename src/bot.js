@@ -29,7 +29,7 @@ process.on("message", msg => {
 	}
 });
 
-client.on('ready', async () => {
+client.once('ready', async () => {
 	console.log(`Logged in as ${client.user.tag}`);
 	// Gonna try logging some websocket data for future implementation
 	const sock = new WebSocket("wss://phish.sinking.yachts/feed", {
@@ -41,7 +41,7 @@ client.on('ready', async () => {
 	sock.onopen = () => {
 		console.log("Connected to WS");
 	}
-
+	
 	sock.onmessage = (e) => {
 		JSON.parse(e.data)
 	}
@@ -65,9 +65,9 @@ client.on("messageCreate", async (message) => {
 	
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
-		let URLs = message.content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g);
+		let URLs = message.content.match(/^https?:\/\//);
 		if (URLs === null || URLs === undefined) break;
-		if (URLs.includes(URL)) {
+		if (URLs.input.includes(URL)) {
 			reportChannel.send({
 				"embeds": [{
 					"color": null,
@@ -81,7 +81,7 @@ client.on("messageCreate", async (message) => {
 						},
 						{
 							"name": "URL",
-							"value": y
+							"value": URLs.input
 						}
 					],
 					"author": {
@@ -96,11 +96,12 @@ client.on("messageCreate", async (message) => {
 			});
 
 			if (message.deletable) await message.delete();
-			if (message.member.bannable && message.member.permissions.has('KICK_MEMBERS')) {
+			if (message.member.bannable && !message.member.permissions.has('KICK_MEMBERS')) {
 				try {
 					await message.author.send(discord.banMsg.replace("{guild}", message.guild.name));
 					await message.member.ban({ reason: "Scam detected", days: 1 });
 					await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
+					return;
 				} catch (e) {
 					console.error(e);
 				}
