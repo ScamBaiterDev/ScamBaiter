@@ -1,0 +1,17 @@
+{
+	"discord": {
+		"token": "",
+		"status": {
+			"status": "online",
+			"activities": [{
+				"type": "WATCHING",
+				"name": "for scammers"
+			}]
+		},
+		"banMsg": "You got softbanned from {guild} for sending a scam link!",
+		"reportChannel": "channel ID here"
+	},
+	"owners": ["put your user ID here"],
+	"scamApi": "https://phish.sinking.yachts/v2/all",
+	"inviteMsg": "https://discord.com/api/oauth2/authorize?client_id=932391527601287178&permissions=11285&scope=bot"
+}
