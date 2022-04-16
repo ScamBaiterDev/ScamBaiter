@@ -12,14 +12,14 @@ const bot = new Discord.Client({
 	intents: ["GUILD_MESSAGES", "GUILD_BANS", "GUILD_MEMBERS", "GUILD_INVITES", "GUILDS"]
 });
 
-var lastUpdate = null;
-var reportChannel = null;
-var db = []
+let lastUpdate = null;
+let reportChannel = null;
+let db = [];
 
 process.on("message", msg => {
 	if (!msg.type) return false;
 
-	if (msg.type == "activity") {
+	if (msg.type === "activity") {
 		console.log(msg)
 		bot.user.setPresence(msg.data);
 	}
@@ -54,14 +54,14 @@ bot.on("messageCreate", (msg) => {
 	const prefix = "$";
 	const args = msg.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
-	if (msg.channel.type == "DM") {
+	if (msg.channel.type === "DM") {
 		return; // For future DM only commands
 	};
 	db.forEach(x => {
 		let urls = msg.content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g)
 		if (urls) {
 			urls.forEach(y => {
-				if (url.parse(y).hostname == x) {
+				if (url.parse(y).hostname === x) {
 					reportChannel.send({
 						"embeds": [{
 							"color": null,
@@ -172,7 +172,7 @@ bot.on("messageCreate", (msg) => {
 							// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
 						}
 					}).then((resp) => {
-						msg1.edit(resp.data.toString());
+						msg1.edit(`${args[0]} is ${resp.data?"":"not"}a scam.`);
 					})
 				}).catch(() => {
 					msg1.edit("An error occurred while checking that domain name!\nTry again later")
