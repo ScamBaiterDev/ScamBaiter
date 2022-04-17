@@ -13,6 +13,7 @@ const bot = new Discord.Client({
 });
 
 let lastUpdate = null;
+let lastId = 0;
 let reportChannel = null;
 let db = [];
 
@@ -62,49 +63,52 @@ bot.on("messageCreate", (msg) => {
 		if (urls) {
 			urls.forEach(y => {
 				if (url.parse(y).hostname === x) {
-					reportChannel.send({
-						"embeds": [{
-							"color": null,
-							"fields": [{
-									"name": "User",
-									"value": `${msg.author} (${msg.author.tag})\nID: ${msg.author.id}`
+					if (msg.author.id !== lastId) {
+						lastId = msg.author.id;
+						reportChannel.send({
+							"embeds": [{
+								"color": null,
+								"fields": [{
+										"name": "User",
+										"value": `${msg.author} (${msg.author.tag})\nID: ${msg.author.id}`
+									},
+									{
+										"name": "Message",
+										"value": msg.content
+									},
+									{
+										"name": "URL",
+										"value": y
+									}
+								],
+								"author": {
+									"name": msg.guild.name,
+									"icon_url": msg.guild.iconURL()
 								},
-								{
-									"name": "Message",
-									"value": msg.content
-								},
-								{
-									"name": "URL",
-									"value": y
+								"timestamp": new Date(),
+								"thumbnail": {
+									"url": msg.author.avatarURL()
 								}
-							],
-							"author": {
-								"name": msg.guild.name,
-								"icon_url": msg.guild.iconURL()
-							},
-							"timestamp": new Date(),
-							"thumbnail": {
-								"url": msg.author.avatarURL()
-							}
-						}]
-					})
-					msg.delete().catch(() => {});
-					if (msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
-						msg.author.send(config.discord.banMsg.replace("{guild}", msg.guild.name)).finally(() => {
-							if (msg.member == null) return;
-							msg.member.ban({
-								"reason": "AntiScam - Softban",
-								"days": 1
-							}).then((mem) => {
-								setTimeout(() => {
-									mem.guild.bans.remove(mem.user, "AntiScam - Softban");
-								}, 500);
+							}]
+						})
+						msg.delete().catch(() => {});
+						if (msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
+							msg.author.send(config.discord.banMsg.replace("{guild}", msg.guild.name)).finally(() => {
+								if (msg.member == null) return;
+								msg.member.ban({
+									"reason": "AntiScam - Softban",
+									"days": 1
+								}).then((mem) => {
+									setTimeout(() => {
+										mem.guild.bans.remove(mem.user, "AntiScam - Softban");
+									}, 500);
+								}).catch((err) => {
+									console.error(err)
+								});
 							}).catch((err) => {
 								console.error(err)
 							});
-						}).catch((err) => {
-							console.error(err)
-						});
+						}
 					}
 				}
 			})
