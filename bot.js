@@ -93,6 +93,10 @@ bot.on("messageCreate", (msg) => {
 									"text": `${msg.id}${(msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS"))?" | Softbanned":" | Not Softbanned"}`
 								}
 							}]
+						}).then((reportMsg) => {
+							if(reportChannel.type === "GUILD_NEWS") {
+								reportMsg.crosspost();
+							}
 						})
 						msg.delete().catch(() => {});
 						if (msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS")) {
