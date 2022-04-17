@@ -69,28 +69,28 @@ client.on('messageCreate', async (message) => {
 		if (URLs === null || URLs === undefined) break;
 		if (URLs.input.includes(URL)) {
 			reportChannel.send({
-				'embeds': [{
-					'color': null,
-					'fields': [{
-						'name': 'User',
-						'value': `${message.author} (${message.author.tag})\nID: ${message.author.id}`
+				embeds: [{
+					color: null,
+					fields: [{
+						name': 'User',
+						value': `${message.author} (${message.author.tag})\nID: ${message.author.id}`
 					},
 						{
-							'name': 'Message',
-							'value': message.content
+							name: 'Message',
+							value': message.content
 						},
 						{
-							'name': 'URL',
-							'value': URLs.input
+							name: 'URL',
+							value: URLs.input
 						}
 					],
-					'author': {
-						'name': message.guild.name,
-						'icon_url': message.guild.iconURL()
+					author: {
+						name: message.guild.name,
+						icon_url: message.guild.iconURL()
 					},
-					'timestamp': new Date(),
-					'thumbnail': {
-						'url': message.author.avatarURL()
+					timestamp: new Date(),
+					thumbnail: {
+						url: message.author.avatarURL()
 					}
 				}]
 			});
