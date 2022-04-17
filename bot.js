@@ -90,7 +90,7 @@ bot.on("messageCreate", (msg) => {
 									"url": msg.author.avatarURL()
 								},
 								"footer": {
-									"text": msg.id
+									"text": `${msg.id}${(msg.member.bannable && !msg.member.permissions.has("KICK_MEMBERS"))?" | Softbanned":" | Not Softbanned"}`
 								}
 							}]
 						})
