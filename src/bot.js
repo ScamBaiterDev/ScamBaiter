@@ -72,12 +72,12 @@ client.on('messageCreate', async (message) => {
 				embeds: [{
 					color: null,
 					fields: [{
-						name': 'User',
-						value': `${message.author} (${message.author.tag})\nID: ${message.author.id}`
+						name: 'User',
+						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`
 					},
 						{
 							name: 'Message',
-							value': message.content
+							value: message.content
 						},
 						{
 							name: 'URL',
@@ -115,19 +115,19 @@ client.on('messageCreate', async (message) => {
 				client.shard.fetchClientValues('guilds.cache.size').then((value) => {
 					message.channel.send({
 						embeds: [{
-							'title': 'Bot Info',
-							'footer': {
-								'text': `Commit ${revision}`
+							title: 'Bot Info',
+							footer: {
+								text: `Commit ${revision}`
 							},
-							'fields': [{
-								'inline': false,
-								'name': 'System Information',
-								'value': `Hostname: ${owners.includes(message.author.id) ? hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - uptime())}:R>\nPlatform: ${platform} ${release()}\nMemory: ${xbytes(totalmem() - freemem())}/${xbytes(totalmem())}`
+							fields: [{
+								inline: false,
+								name: 'System Information',
+								value: `Hostname: ${owners.includes(message.author.id) ? hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - uptime())}:R>\nPlatform: ${platform} ${release()}\nMemory: ${xbytes(totalmem() - freemem())}/${xbytes(totalmem())}`
 							},
 							{
-								'inline': false,
-								'name': 'Bot Info',
-								'value': `Guild Count: ${value.reduce((a, b) => a + b, 0).toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime() / 1000)}:D> <t:${Math.floor(startup.getTime() / 1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime() / 1000)}:R>`
+								inline: false,
+								name: 'Bot Info',
+								value: `Guild Count: ${value.reduce((a, b) => a + b, 0).toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(startup.getTime() / 1000)}:D> <t:${Math.floor(startup.getTime() / 1000)}:T>\nLast Database Update was <t:${Math.floor(lastUpdate.getTime() / 1000)}:R>`
 							}
 							]
 						}]
@@ -167,7 +167,6 @@ const updateDb = () => {
 					// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
 				}
 			});
-
 
 			await writeFile(DBPath, JSON.stringify(scamAPIRESP.data));
 			db = scamAPIRESP.data;
