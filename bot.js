@@ -88,6 +88,9 @@ bot.on("messageCreate", (msg) => {
 								"timestamp": new Date(),
 								"thumbnail": {
 									"url": msg.author.avatarURL()
+								},
+								"footer": {
+									"text": msg.id
 								}
 							}]
 						})
