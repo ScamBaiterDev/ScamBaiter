@@ -62,7 +62,7 @@ client.on('messageCreate', async (message) => {
 
 	// TODO: DM Only Commands
 	if (message.channel.type === 'DM') return;
-	
+
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
 		if (message.author.id === lastId) break;
