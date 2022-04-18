@@ -1,8 +1,8 @@
-const { hostname, uptime, platform, release, totalmem, freemem } = require('os');
+const os = require('os');
 const xbytes = require('xbytes');
-const { Client } = require('discord.js');
+const Discord = require('discord.js');
 const axios = require('axios');
-const { writeFile } = require('fs/promises');
+const fs = require('fs/promises');
 const WebSocket = require('ws');
 const { discord, owners, scamApi, inviteMsg } = require('../config.json');
 const path = require('path');
@@ -12,7 +12,7 @@ const startup = new Date();
 const DBPath = path.join(__dirname, '..', 'db.json');
 
 
-const client = new Client({
+const client = new Discord.Client({
 	intents: ['GUILD_MESSAGES', 'GUILD_BANS', 'GUILD_MEMBERS', 'GUILD_INVITES', 'GUILDS']
 });
 
@@ -122,7 +122,7 @@ client.on('messageCreate', async (message) => {
 							fields: [{
 								inline: false,
 								name: 'System Information',
-								value: `Hostname: ${owners.includes(message.author.id) ? hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - uptime())}:R>\nPlatform: ${platform} ${release()}\nMemory: ${xbytes(totalmem() - freemem())}/${xbytes(totalmem())}`
+								value: `Hostname: ${owners.includes(message.author.id) ? os.hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem() - os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
 								inline: false,
@@ -168,7 +168,7 @@ const updateDb = () => {
 				}
 			});
 
-			await writeFile(DBPath, JSON.stringify(scamAPIRESP.data));
+			await fs.writeFile(DBPath, JSON.stringify(scamAPIRESP.data));
 			db = scamAPIRESP.data;
 			lastUpdate = new Date();
 			console.info('Updated DB!');
