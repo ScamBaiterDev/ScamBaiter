@@ -1,8 +1,15 @@
+<<<<<<< HEAD:index.js
 const Discord = require('discord.js');
 const { discord } = require("./config.json");
 const path = require("path");
 
 const manager = new Discord.ShardingManager(path.join(__dirname, '.', 'bot.js'), {
+=======
+const { ShardingManager } = require('discord.js');
+const { discord } = require("../config.json");
+
+const manager = new ShardingManager('./bot.js', {
+>>>>>>> c2f9110 (Works?):src/index.js
 	token: discord.token
 });
 
