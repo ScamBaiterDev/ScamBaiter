@@ -4,19 +4,19 @@ const Discord = require('discord.js');
 const axios = require('axios');
 const fs = require('fs/promises');
 const WebSocket = require('ws');
-const { discord, owners, scamApi, inviteMsg } = require('../config.json');
+const { discord, owners, scamApi, inviteMsg } = require('./config.json');
 const path = require('path');
 const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0, 6);
 const startup = new Date();
 
-const DBPath = path.join(__dirname, '..', 'db.json');
-
+const DBPath = path.join(__dirname, '.', 'db.json');
 
 const client = new Discord.Client({
 	intents: ['GUILD_MESSAGES', 'GUILD_BANS', 'GUILD_MEMBERS', 'GUILD_INVITES', 'GUILDS']
 });
 
 let lastUpdate = null;
+let lastId = 0;
 let reportChannel = null;
 let db = [];
 
@@ -65,6 +65,7 @@ client.on('messageCreate', async (message) => {
 	
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
+		if (message.author.id === lastId) break;
 		let URLs = message.content.match(/^https?:\/\//);
 		if (URLs === null || URLs === undefined) break;
 		if (URLs.input.includes(URL)) {
@@ -91,8 +92,15 @@ client.on('messageCreate', async (message) => {
 					timestamp: new Date(),
 					thumbnail: {
 						url: message.author.avatarURL()
+					},
+					footer: {
+						text:`${message.id}${(message.member.bannable && !message.member.permissions.has("KICK_MEMBERS"))?" | Softbanned":" | Not Softbanned"}`
 					}
 				}]
+			}).then((reportMsg) => {
+				if (reportChannel.type === "GUILD_NEWS") {
+					reportMsg.crosspost();
+				}
 			});
 
 			if (message.deletable) await message.delete();
