@@ -41,7 +41,7 @@ client.once('ready', async () => {
 	sock.onopen = () => {
 		console.log('Connected to WS');
 	}
-	
+
 	sock.onmessage = (e) => {
 		JSON.parse(e.data)
 	}
@@ -65,6 +65,8 @@ client.on('messageCreate', async (message) => {
 
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
+		let URLs = message.content.match(/^https?:\/\//);
+		if (URLs === null || URLs === undefined) break;
 		// Check if any of the elements in lastIdPerGuild matches the message id and guild id 
 		if (lastIdPerGuild.find(data => data.userId === message.user.id && data.guildId === message.guild.id)) {
 			// Remove the element from the array
@@ -78,8 +80,6 @@ client.on('messageCreate', async (message) => {
 				guildId: message.guild.id
 			});
 		}
-		let URLs = message.content.match(/^https?:\/\//);
-		if (URLs === null || URLs === undefined) break;
 		if (URLs.input.includes(URL)) {
 			reportChannel.send({
 				embeds: [{
@@ -88,14 +88,14 @@ client.on('messageCreate', async (message) => {
 						name: 'User',
 						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`
 					},
-						{
-							name: 'Message',
-							value: message.content
-						},
-						{
-							name: 'URL',
-							value: URLs.input
-						}
+					{
+						name: 'Message',
+						value: message.content
+					},
+					{
+						name: 'URL',
+						value: URLs.input
+					}
 					],
 					author: {
 						name: message.guild.name,
@@ -106,7 +106,7 @@ client.on('messageCreate', async (message) => {
 						url: message.author.avatarURL()
 					},
 					footer: {
-						text:`${message.id}${(message.member.bannable && !message.member.permissions.has("KICK_MEMBERS"))?" | Softbanned":" | Not Softbanned"}`
+						text: `${message.id}${(message.member.bannable && !message.member.permissions.has("KICK_MEMBERS")) ? " | Softbanned" : " | Not Softbanned"}`
 					}
 				}]
 			}).then((reportMsg) => {
@@ -159,7 +159,7 @@ client.on('messageCreate', async (message) => {
 			case 'update':
 				if (!owners.includes(message.author.id)) return;
 				message.channel.send('Updating...').then((msg1) => {
-					updateDb().then(() => msg1.edit('Updated Database')).catch(()=> msg1.edit('Failed to Update Database'))
+					updateDb().then(() => msg1.edit('Updated Database')).catch(() => msg1.edit('Failed to Update Database'))
 				});
 				break;
 			case 'invite':
