@@ -66,7 +66,7 @@ client.on('messageCreate', async (message) => {
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
 		let URLs = message.content.match(/^https?:\/\//);
-		if (URLs === null || URLs === undefined) break;
+		if (URLs.length === 0 || !URLs) break;
 		// Check if any of the elements in lastIdPerGuild matches the message id and guild id 
 		if (lastIdPerGuild.find(data => data.userId === message.user.id && data.guildId === message.guild.id)) {
 			// Remove the element from the array
