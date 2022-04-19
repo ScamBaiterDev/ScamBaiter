@@ -16,7 +16,7 @@ const client = new Discord.Client({
 });
 
 let lastUpdate = null;
-let lastId = 0;
+let lastIdPerGuild = [];
 let reportChannel = null;
 let db = [];
 
@@ -65,7 +65,20 @@ client.on('messageCreate', async (message) => {
 
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
-		if (message.author.id === lastId) break;
+		let fetchedData = lastIdPerGuild.find(data => data.messageId === message.id && data.guildId === message.guild.id)
+		// Check if any of the elements in lastIdPerGuild matches the message id and guild id 
+		if (lastIdPerGuild.find(data => data.userId === message.user.id && data.guildId === message.guild.id)) {
+			// Remove the element from the array
+			lastIdPerGuild = lastIdPerGuild.filter(id => id.id !== message.id);
+			break;
+		} else {
+			// If the message is not in the array, add it
+			lastIdPerGuild.push({
+				messageId: message.id,
+				userId: message.user.id,
+				guildId: message.guild.id
+			});
+		}
 		let URLs = message.content.match(/^https?:\/\//);
 		if (URLs === null || URLs === undefined) break;
 		if (URLs.input.includes(URL)) {
