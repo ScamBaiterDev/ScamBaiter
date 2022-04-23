@@ -4,7 +4,7 @@ const Discord = require('discord.js');
 const axios = require('axios');
 const fs = require('fs/promises');
 const WebSocket = require('ws');
-const { discord, owners, scamApi, inviteMsg } = require('./config.json');
+const config = require('./config.json');
 const path = require('path');
 const revision = require('child_process').execSync('git rev-parse HEAD').toString().trim().slice(0, 6);
 const startup = new Date();
@@ -45,7 +45,7 @@ client.once('ready', async () => {
 	sock.onmessage = (e) => {
 		JSON.parse(e.data)
 	}
-	client.channels.fetch(discord.reportChannel).then((channel) => {
+	client.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel
 	})
 	await updateDb();
@@ -118,7 +118,7 @@ client.on('messageCreate', async (message) => {
 			if (message.deletable) await message.delete();
 			if (message.member.bannable && !message.member.permissions.has('KICK_MEMBERS')) {
 				try {
-					await message.author.send(discord.banMsg.replace('{guild}', message.guild.name));
+					await message.author.send(config.discord.banMsg.replace('{guild}', message.guild.name));
 					await message.member.ban({ reason: 'Scam detected', days: 1 });
 					await message.guild.bans.remove(message.author.id, 'AntiScam - Softban');
 					return;
@@ -142,7 +142,7 @@ client.on('messageCreate', async (message) => {
 							fields: [{
 								inline: false,
 								name: 'System Information',
-								value: `Hostname: ${owners.includes(message.author.id) ? os.hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem() - os.freemem())}/${xbytes(os.totalmem())}`
+								value: `Hostname: ${config.owners.includes(message.author.id) ? os.hostname() : '••••••••'}\nStarted <t:${Math.floor(new Date() / 1000 - os.uptime())}:R>\nPlatform: ${os.platform} ${os.release()}\nMemory: ${xbytes(os.totalmem() - os.freemem())}/${xbytes(os.totalmem())}`
 							},
 							{
 								inline: false,
@@ -157,13 +157,13 @@ client.on('messageCreate', async (message) => {
 				});
 				break;
 			case 'update':
-				if (!owners.includes(message.author.id)) return;
+				if (!config.owners.includes(message.author.id)) return;
 				message.channel.send('Updating...').then((msg1) => {
 					updateDb().then(() => msg1.edit('Updated Database')).catch(() => msg1.edit('Failed to Update Database'))
 				});
 				break;
 			case 'invite':
-				await message.reply(inviteMsg);
+				await message.reply(config.inviteMsg);
 				break;
 			case 'check':
 				if (!args[0]) return message.reply(`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``);
@@ -176,12 +176,12 @@ client.on('messageCreate', async (message) => {
 	}
 });
 
-client.login(discord.token);
+client.login(config.discord.token);
 
 const updateDb = () => {
 	return new Promise(async (resolve, reject) => {
 		try {
-			let scamAPIRESP = await axios.get(scamApi, {
+			let scamAPIRESP = await axios.get(config.scamApi, {
 				headers: {
 					'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158'
 					// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
