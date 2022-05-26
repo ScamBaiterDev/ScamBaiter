@@ -20,6 +20,27 @@ let lastIdPerGuild = [];
 let reportChannel = null;
 let db = [];
 
+// Gonna try logging some websocket data for future implementation
+const sock = new WebSocket('wss://phish.sinking.yachts/feed', {
+	headers: {
+		'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
+		'X-Identity': 'ScamBaiter/1.0; Chris Chrome#9158'
+	}
+});
+
+sock.onopen = () => {
+	console.log('Connected to WS');	}
+
+sock.onmessage = (message) => {
+	const data = JSON.parse(message.data);
+	if (data.type === 'add') {
+		// Get all the entries in "data.domains" array and push to db
+		data.domains.forEach((domain) => {
+			db.push(domain);
+		});
+	}
+}
+
 process.on('message', msg => {
 	if (!msg.type) return false;
 
@@ -30,21 +51,7 @@ process.on('message', msg => {
 });
 
 client.once('ready', async () => {
-	console.log(`Logged in as ${client.user.tag}`);
-	// Gonna try logging some websocket data for future implementation
-	const sock = new WebSocket('wss://phish.sinking.yachts/feed', {
-		headers: {
-			'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
-			'X-Identity': 'ScamBaiter/1.0; Chris Chrome#9158'
-		}
-	})
-	sock.onopen = () => {
-		console.log('Connected to WS');
-	}
-
-	sock.onmessage = (e) => {
-		JSON.parse(e.data)
-	}
+	console.info(`Logged in as ${client.user.tag}`);
 	client.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel
 	})
