@@ -1,3 +1,12 @@
+process.on('message', msg => {
+	if (!msg.type) return false;
+
+	if (msg.type === 'activity') {
+		console.info(msg);
+		client.user.setPresence(msg.data);
+	}
+});
+
 const os = require('os');
 const xbytes = require('xbytes');
 const Discord = require('discord.js');
@@ -20,7 +29,10 @@ let lastIdPerGuild = [];
 let reportChannel = null;
 let db = [];
 
-// Gonna try logging some websocket data for future implementation
+setInterval(() => {
+	updateDb()
+}, 1000 * 30 * 60);
+
 const sock = new WebSocket('wss://phish.sinking.yachts/feed', {
 	headers: {
 		'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
@@ -29,7 +41,8 @@ const sock = new WebSocket('wss://phish.sinking.yachts/feed', {
 });
 
 sock.onopen = () => {
-	console.log('Connected to WS');	}
+	console.log('Connected to WS');
+}
 
 sock.onmessage = (message) => {
 	const data = JSON.parse(message.data);
@@ -41,24 +54,12 @@ sock.onmessage = (message) => {
 	}
 }
 
-process.on('message', msg => {
-	if (!msg.type) return false;
-
-	if (msg.type === 'activity') {
-		console.info(msg);
-		client.user.setPresence(msg.data);
-	}
-});
-
 client.once('ready', async () => {
 	console.info(`Logged in as ${client.user.tag}`);
 	client.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel
 	})
 	await updateDb();
-	setInterval(() => {
-		updateDb()
-	}, 1000 * 30 * 60);
 });
 client.on('messageCreate', async (message) => {
 	if (message.author.bot) return;

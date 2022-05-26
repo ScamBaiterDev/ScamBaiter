@@ -1,8 +1,9 @@
 const Discord = require('discord.js');
-const { discord } = require("./config.json");
-const path = require("path");
+const config = require("./config.json");
 
-const manager = new Discord.ShardingManager(path.join(__dirname, '.', 'bot.js'), {
+const manager = new Discord.ShardingManager('./bot.js', {
+	token: config.discord.token
+});
 
 manager.on('shardCreate', shard => {
 	console.log(`Launched shard ${shard.id}`)
@@ -12,10 +13,10 @@ manager.on('shardCreate', shard => {
 		shard.send({
 			type: "activity",
 			data: {
-				status: discord.status.status,
+				status: config.discord.status.status,
 				activities: [{
-					type: discord.status.activities[0].type,
-					name: `${discord.status.activities[0].name} | Shard ${shard.id.toString()}`
+					type: config.discord.status.activities[0].type,
+					name: `${config.discord.status.activities[0].name} | Shard ${shard.id.toString()}`
 				}]
 			}
 		});
