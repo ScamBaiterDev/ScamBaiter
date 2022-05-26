@@ -21,7 +21,8 @@ const startup = new Date();
 const DBPath = path.join(__dirname, '.', 'db.json');
 
 const client = new Discord.Client({
-	intents: ['GUILD_MESSAGES', 'GUILD_BANS', 'GUILD_MEMBERS', 'GUILD_INVITES', 'GUILDS']
+	intents: ['GUILD_MESSAGES', 'GUILD_BANS', 'GUILD_MEMBERS', 'GUILD_INVITES', 'GUILDS'],
+	partials: ['MESSAGE', 'CHANNEL', 'GUILD_MEMBER', 'USER']
 });
 
 let lastUpdate = null;
@@ -74,9 +75,9 @@ client.on('messageCreate', async (message) => {
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
 		let URLs = message.content.match(/^https?:\/\//);
-		if (URLs.length === 0 || !URLs) break;
-		// Check if any of the elements in lastIdPerGuild matches the message id and guild id 
-		if (lastIdPerGuild.find(data => data.userId === message.user.id && data.guildId === message.guild.id)) {
+		if (!URLs || URLs.length === 0) break;
+		// Check if any of the elements in lastIdPerGuild matches the message id and guild id
+		if (lastIdPerGuild.find(data => data.userId === message.member.id && data.guildId === message.guild.id)) {
 			// Remove the element from the array
 			lastIdPerGuild = lastIdPerGuild.filter(id => id.id !== message.id);
 			break;
@@ -84,7 +85,7 @@ client.on('messageCreate', async (message) => {
 			// If the message is not in the array, add it
 			lastIdPerGuild.push({
 				messageId: message.id,
-				userId: message.user.id,
+				userId: message.author.id,
 				guildId: message.guild.id
 			});
 		}
@@ -175,10 +176,11 @@ client.on('messageCreate', async (message) => {
 				break;
 			case 'check':
 				if (!args[0]) return message.reply(`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``);
-				let msg1 = await message.reply('Checking...');
-				await msg1.edit(`${args[0]} is ${db.includes(args[0]) ? '' : 'not '}a scam.`).catch(() => {
-					msg1.edit('An error occurred while checking that domain name!\nTry again later');
-				});
+				await message.reply('Checking...').then((msg1) => (
+					msg1.edit(`${args[0]} is ${db.includes(args[0]) ? '' : 'not '}a scam.`).catch(() => {
+						msg1.edit('An error occurred while checking that domain name!\nTry again later');
+					})
+				));
 				break;
 		}
 	}
