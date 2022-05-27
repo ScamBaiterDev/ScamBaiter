@@ -75,7 +75,7 @@ bot.on('messageCreate', async (message) => {
 	// TODO: DM Only Commands
 	if (message.channel.type === 'DM') return;
 
-	if (URLs && db.includes(URLs.input.replace(/^https?:\/\//, '').replace('/', ''))) {
+	if (URLs && db.includes(new URL(URLs.input).hostname)) {
 		if (message.deletable) await message.delete();
 
 		// Check if any of the elements in lastIdPerGuild matches the message id and guild id
