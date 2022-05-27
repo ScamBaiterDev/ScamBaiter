@@ -81,21 +81,18 @@ bot.on("messageCreate", async (message) => {
 	// Strip all discord formatting from the message
 	const cleanMessage = message.content.replace(/\*|_|~|`|<|>/g, "").split("\n");
 
-	console.log(prefix, args, cmd, cleanMessage);
 	// TODO: DM Only Commands
 	if (message.channel.type === "DM") return;
 	let isScam = false;
 	let scamDomain = "";
 	for (const potscamurl of cleanMessage) {
 		if (cmd === "check") break;
-		console.log("potscamurl: " + potscamurl);
 		// remove everything after the third slash
 		const removeEndingSlash = potscamurl.split("/")[2];
 		if (removeEndingSlash === undefined) continue;
 		const splited = removeEndingSlash.split(".");
 		const domain =
 			splited[splited.length - 2] + "." + splited[splited.length - 1];
-		console.log("domain: " + domain);
 
 		// check if domain is in db
 		if (db.includes(domain)) {
