@@ -1,8 +1,7 @@
-const {
-	ShardingManager
-} = require('discord.js');
+const Discord = require('discord.js');
 const config = require("./config.json");
-const manager = new ShardingManager('./bot.js', {
+
+const manager = new Discord.ShardingManager('./bot.js', {
 	token: config.discord.token
 });
 
@@ -24,4 +23,4 @@ manager.on('shardCreate', shard => {
 	})
 });
 
-manager.spawn()
+manager.spawn();
