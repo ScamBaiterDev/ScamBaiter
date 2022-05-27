@@ -79,7 +79,7 @@ bot.on("messageCreate", async (message) => {
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
 	// Strip all discord formatting from the message
-	const cleanMessage = message.content.replace(/\*|_|~|`|<|>/g, "").split("\n");
+	const cleanMessage = message.content.replace(/\*|_|~|`|<|>|\|/g, "").split("\n");
 
 	// TODO: DM Only Commands
 	if (message.channel.type === "DM") return;
