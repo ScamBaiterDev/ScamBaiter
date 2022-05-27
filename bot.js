@@ -1,3 +1,4 @@
+
 process.on('message', msg => {
 	if (!msg.type) return false;
 
@@ -66,21 +67,22 @@ bot.on('messageCreate', async (message) => {
 	if (message.author.bot) return;
 
 	const prefix = '$';
-	const args = message.content.slice(prefix.length).trim().split(/ +/g);
+	const content = message.content.toLowerCase();
+	const args = content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
+	const URLs = content.match(/^https?:\/\//);
 
 	// TODO: DM Only Commands
 	if (message.channel.type === 'DM') return;
 
-	// filter the DB to see if the message content contain a SCAM URL
-	for (const URL of db) {
-		let URLs = message.content.match(/^https?:\/\//);
-		if (!URLs || URLs.length === 0) break;
+	if (URLs && db.includes(URLs.input.replace(/^https?:\/\//, '').replace('/', ''))) {
+		if (message.deletable) await message.delete();
+
 		// Check if any of the elements in lastIdPerGuild matches the message id and guild id
 		if (lastIdPerGuild.find(data => data.userId === message.member.id && data.guildId === message.guild.id)) {
 			// Remove the element from the array
 			lastIdPerGuild = lastIdPerGuild.filter(id => id.id !== message.id);
-			break;
+			return;
 		} else {
 			// If the message is not in the array, add it
 			lastIdPerGuild.push({
@@ -89,55 +91,50 @@ bot.on('messageCreate', async (message) => {
 				guildId: message.guild.id
 			});
 		}
-		if (URLs.input.includes(URLs.input[0])) {
-			reportChannel.send({
-				embeds: [{
-					color: null,
-					fields: [{
-						name: 'User',
-						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`
-					},
-					{
-						name: 'Message',
-						value: message.content
-					},
-					{
-						name: 'URL',
-						value: URLs.input
-					}
-					],
-					author: {
-						name: message.guild.name,
-						icon_url: message.guild.iconURL()
-					},
-					timestamp: new Date(),
-					thumbnail: {
-						url: message.author.avatarURL()
-					},
-					footer: {
-						text: `${message.id}${(message.member.bannable && !message.member.permissions.has("KICK_MEMBERS")) ? " | Softbanned" : " | Not Softbanned"}`
-					}
-				}]
-			}).then((reportMsg) => {
-				if (reportChannel.type === "GUILD_NEWS") {
-					reportMsg.crosspost();
-				}
-			});
 
-			console.debug('Test Spot 5');
-			if (message.deletable) await message.delete();
-			if (message.member.bannable && !message.member.permissions.has('KICK_MEMBERS')) {
-				try {
-					await message.author.send(config.discord.banMsg.replace('{guild}', message.guild.name));
-					await message.member.ban({ reason: 'Scam detected', days: 1 });
-					await message.guild.bans.remove(message.author.id, 'AntiScam - Softban');
-					return;
-				} catch (e) {
-					console.error(e);
+		const scamEmbed = new Discord.MessageEmbed()
+			.setFields([
+				{
+					name: 'User',
+					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`
+				},
+				{
+					name: 'Message',
+					value: message.content
+				},
+				{
+					name: 'URL',
+					value: URLs.input
 				}
+			])
+			.setAuthor({
+				name: message.guild.name,
+				icon_url: message.guild.iconURL()
+			})
+			.setThumbnail(message.author.avatarURL())
+			.setFooter({
+				text: `${message.id}${(message.member.bannable && !message.member.permissions.has("KICK_MEMBERS")) ? " | Softbanned" : " | Not Softbanned"}`
+			})
+			.setTimestamp();
+
+		await reportChannel.send({ embeds: [scamEmbed] }).then(reportMsg => {
+			if (reportChannel.type === "GUILD_NEWS") {
+				reportMsg.crosspost();
+			}
+		});
+
+		if (message.member.bannable && !message.member.permissions.has('KICK_MEMBERS')) {
+			try {
+				await message.author.send(config.discord.banMsg.replace('{guild}', message.guild.name));
+				await message.member.ban({ reason: 'Scam detected', days: 1 });
+				await message.guild.bans.remove(message.author.id, 'AntiScam - Softban');
+				return;
+			} catch (e) {
+				console.error(e);
 			}
 		}
 	}
+
 	// Funky debug commands
 	if (message.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
