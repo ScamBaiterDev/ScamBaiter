@@ -74,10 +74,8 @@ bot.on('messageCreate', async (message) => {
 
 	// filter the DB to see if the message content contain a SCAM URL
 	for (const URL of db) {
-		console.debug('Test Spot 1');
 		let URLs = message.content.match(/^https?:\/\//);
 		if (!URLs || URLs.length === 0) break;
-		console.debug('Test Spot 2');
 		// Check if any of the elements in lastIdPerGuild matches the message id and guild id
 		if (lastIdPerGuild.find(data => data.userId === message.member.id && data.guildId === message.guild.id)) {
 			// Remove the element from the array
@@ -91,9 +89,7 @@ bot.on('messageCreate', async (message) => {
 				guildId: message.guild.id
 			});
 		}
-		console.debug('Test Spot 3', URL);
 		if (URLs.input.includes(URLs.input[0])) {
-			console.debug('Test Spot 4');
 			reportChannel.send({
 				embeds: [{
 					color: null,
