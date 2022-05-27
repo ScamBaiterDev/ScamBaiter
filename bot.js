@@ -91,8 +91,9 @@ bot.on("messageCreate", async (message) => {
 		if (potscamurl.match(/^https?:\/\//)) {
 			// remove everything after the third slash
 			const removeEndingSlash = potscamurl.split("/")[2];
-			const splited = removeEndingSlash.split('.')
-			const domain = splited[splited.length - 2] + '.' + splited[splited.length - 1]
+			const splited = removeEndingSlash.split(".");
+			const domain =
+				splited[splited.length - 2] + "." + splited[splited.length - 1];
 
 			// check if domain is in db
 			if (db.includes(domain)) {
@@ -147,9 +148,9 @@ bot.on("messageCreate", async (message) => {
 		.setThumbnail(message.author.avatarURL())
 		.setFooter({
 			text: `${message.id}${message.member.bannable &&
-				!message.member.permissions.has("KICK_MEMBERS")
-				? " | Softbanned"
-				: " | Not Softbanned"
+					!message.member.permissions.has("KICK_MEMBERS")
+					? " | Softbanned"
+					: " | Not Softbanned"
 				}`,
 		})
 		.setTimestamp();
@@ -181,44 +182,43 @@ bot.on("messageCreate", async (message) => {
 		switch (cmd) {
 			case "botinfo":
 				bot.shard.fetchClientValues("guilds.cache.size").then((value) => {
+					const botInfoEmbed = new Discord.MessageEmbed()
+						.setTitle("Bot Info")
+						.setFields([
+							{
+								inline: false,
+								name: "System Information",
+								value: `Hostname: ${config.owners.includes(message.author.id)
+										? os.hostname()
+										: "••••••••"
+									}\nStarted <t:${Math.floor(
+										new Date() / 1000 - os.uptime()
+									)}:R>\nPlatform: ${os.platform
+									} ${os.release()}\nMemory: ${xbytes(
+										os.totalmem() - os.freemem()
+									)}/${xbytes(os.totalmem())}`,
+							},
+							{
+								inline: false,
+								name: "Bot Info",
+								value: `Guild Count: ${value
+									.reduce((a, b) => a + b, 0)
+									.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(
+										startup.getTime() / 1000
+									)}:D> <t:${Math.floor(
+										startup.getTime() / 1000
+									)}:T>\nLast Database Update was <t:${Math.floor(
+										lastUpdate.getTime() / 1000
+									)}:R>`,
+							},
+						])
+						.setFooter({
+							text: `Commit ${revision}`,
+						})
+						.setTimestamp();
 					message.channel
 						.send({
-							embeds: [
-								{
-									title: "Bot Info",
-									footer: {
-										text: `Commit ${revision}`,
-									},
-									fields: [
-										{
-											inline: false,
-											name: "System Information",
-											value: `Hostname: ${config.owners.includes(message.author.id)
-												? os.hostname()
-												: "••••••••"
-												}\nStarted <t:${Math.floor(
-													new Date() / 1000 - os.uptime()
-												)}:R>\nPlatform: ${os.platform
-												} ${os.release()}\nMemory: ${xbytes(
-													os.totalmem() - os.freemem()
-												)}/${xbytes(os.totalmem())}`,
-										},
-										{
-											inline: false,
-											name: "Bot Info",
-											value: `Guild Count: ${value
-												.reduce((a, b) => a + b, 0)
-												.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(
-													startup.getTime() / 1000
-												)}:D> <t:${Math.floor(
-													startup.getTime() / 1000
-												)}:T>\nLast Database Update was <t:${Math.floor(
-													lastUpdate.getTime() / 1000
-												)}:R>`,
-										},
-									],
-								},
-							],
+							embeds: [botInfoEmbed],
 						})
 						.catch((err) => {
 							console.error(err);
