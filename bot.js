@@ -74,7 +74,7 @@ bot.on('messageCreate', async (message) => {
 
 	// TODO: DM Only Commands
 	if (message.channel.type === 'DM') return;
-	if (URLs && db.includes(new URL(URLs.input).hostname)) {
+	if (URLs) {
 		let isScam = false;
 		for (const url of URLs) {
 			if (db.includes(new URL(url).hostname)) {
