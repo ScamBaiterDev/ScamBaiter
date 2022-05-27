@@ -70,7 +70,7 @@ bot.on('messageCreate', async (message) => {
 	const content = message.content.toLowerCase();
 	const args = content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
-	const URLs = content.match(/^https?:\/\//);
+	const URLs = content.match(/(https?):\/\/(\w+[\-]?\w+)?.?(\w+[\-]?\w+)?/g)
 
 	// TODO: DM Only Commands
 	if (message.channel.type === 'DM') return;
