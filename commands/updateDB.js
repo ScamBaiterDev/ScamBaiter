@@ -10,6 +10,8 @@ module.exports = {
 		await interaction.reply("Updating database...");
 		return await bot.updateDB().then(() => {
 			return interaction.editReply("Database updated!");
-		});
+		}).catch(() => {
+			return interaction.editReply("Database update failed!");
+		});;
 	}
 }
