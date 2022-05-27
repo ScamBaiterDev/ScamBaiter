@@ -7,20 +7,12 @@ process.on("message", (msg) => {
 	}
 });
 
-const os = require("os");
-const xbytes = require("xbytes");
 const Discord = require("discord.js");
 const axios = require("axios");
-const fs = require("fs/promises");
+const fs = require("node:fs");
 const WebSocket = require("ws");
 const config = require("./config.json");
-const path = require("path");
-const revision = require("child_process")
-	.execSync("git rev-parse HEAD")
-	.toString()
-	.trim()
-	.slice(0, 6);
-const startup = new Date();
+const path = require("node:path");
 
 const DBPath = path.join(__dirname, ".", "db.json");
 
@@ -35,13 +27,13 @@ const bot = new Discord.Client({
 	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
 
-let lastUpdate = null;
+bot.lastUpdate = null;
 let lastIdPerGuild = [];
 let reportChannel = null;
-let db = [];
+bot.db = [];
 
 setInterval(() => {
-	updateDb();
+	bot.updateDB();
 }, 1000 * 30 * 60);
 
 const sock = new WebSocket("wss://phish.sinking.yachts/feed", {
@@ -60,29 +52,43 @@ sock.onmessage = (message) => {
 	if (data.type === "add") {
 		// Get all the entries in "data.domains" array and push to db
 		data.domains.forEach((domain) => {
-			db.push(domain);
+			bot.db.push(domain);
 		});
 	}
 };
+
+const commands = new Discord.Collection();
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+(async () => {
+	await bot.login(config.discord.token);
+
+	for (const file of commandFiles) {
+		const filePath = path.join(commandsPath, file);
+		const command = require(filePath);
+
+		commands.set(command.data.name, command);
+	}
+})();
+
 
 bot.once("ready", async () => {
 	console.info(`Logged in as ${bot.user.tag}`);
 	bot.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel;
 	});
-	await updateDb();
+	await bot.updateDB();
 });
+
 bot.on("messageCreate", async (message) => {
 	if (message.author.bot) return;
 
-	const prefix = "$";
-	const args = message.content.slice(prefix.length).trim().split(/ +/g);
-	const cmd = args.shift().toLowerCase();
 	// Strip all discord formatting from the message
 	const cleanMessage = message.content.replace(/\*|_|~|`|<|>|\|/g, "").split("\n");
 
-	// TODO: DM Only Commands
 	if (message.channel.type === "DM") return;
+
 	let isScam = false;
 	let scamDomain = "";
 	for (const potscamurl of cleanMessage) {
@@ -95,7 +101,7 @@ bot.on("messageCreate", async (message) => {
 			splited[splited.length - 2] + "." + splited[splited.length - 1];
 
 		// check if domain is in db
-		if (db.includes(domain)) {
+		if (bot.db.includes(domain)) {
 			isScam = true;
 			scamDomain = domain;
 			break;
@@ -176,88 +182,24 @@ bot.on("messageCreate", async (message) => {
 			}
 		}
 	}
+});
 
-	// Funky debug commands
-	if (message.content.toLowerCase().startsWith(prefix)) {
-		switch (cmd) {
-			case "botinfo":
-				bot.shard.fetchClientValues("guilds.cache.size").then((value) => {
-					const botInfoEmbed = new Discord.MessageEmbed()
-						.setTitle("Bot Info")
-						.setFields([
-							{
-								inline: false,
-								name: "System Information",
-								value: `Hostname: ${config.owners.includes(message.author.id)
-									? os.hostname()
-									: "••••••••"
-									}\nStarted <t:${Math.floor(
-										new Date() / 1000 - os.uptime()
-									)}:R>\nPlatform: ${os.platform
-									} ${os.release()}\nMemory: ${xbytes(
-										os.totalmem() - os.freemem()
-									)}/${xbytes(os.totalmem())}`,
-							},
-							{
-								inline: false,
-								name: "Bot Info",
-								value: `Guild Count: ${value
-									.reduce((a, b) => a + b, 0)
-									.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(
-										startup.getTime() / 1000
-									)}:D> <t:${Math.floor(
-										startup.getTime() / 1000
-									)}:T>\nLast Database Update was <t:${Math.floor(
-										lastUpdate.getTime() / 1000
-									)}:R>`,
-							},
-						])
-						.setFooter({
-							text: `Commit ${revision}`,
-						})
-						.setTimestamp();
-					message.channel
-						.send({
-							embeds: [botInfoEmbed],
-						})
-						.catch((err) => {
-							console.error(err);
-						});
-				});
-				break;
-			case "update":
-				if (!config.owners.includes(message.author.id)) return;
-				message.channel.send("Updating...").then((msg1) => {
-					updateDb()
-						.then(() => msg1.edit("Updated Database"))
-						.catch(() => msg1.edit("Failed to Update Database"));
-				});
-				break;
-			case "invite":
-				await message.reply(config.inviteMsg);
-				break;
-			case "check":
-				if (!args[0])
-					return message.reply(
-						`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
-					);
-				await message.reply("Checking...").then((msg1) =>
-					msg1
-						.edit(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
-						.catch(() => {
-							msg1.edit(
-								"An error occurred while checking that domain name!\nTry again later"
-							);
-						})
-				);
-				break;
-		}
+bot.on('interactionCreate', async (interaction) => {
+	if (!interaction.isCommand()) return;
+
+	const command = commands.get(interaction.commandName);
+
+	if (!command) return;
+
+	try {
+		await command.execute(bot, interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 	}
 });
 
-bot.login(config.discord.token);
-
-const updateDb = () => {
+bot.updateDB = () => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			let scamAPIRESP = await axios.get(config.scamApi, {
@@ -267,13 +209,13 @@ const updateDb = () => {
 				},
 			});
 
-			await fs.writeFile(DBPath, JSON.stringify(scamAPIRESP.data));
-			db = scamAPIRESP.data;
-			lastUpdate = new Date();
+			fs.writeFileSync(DBPath, JSON.stringify(scamAPIRESP.data));
+			bot.db = scamAPIRESP.data;
+			bot.lastUpdate = new Date();
 			console.info("Updated DB!");
 			resolve();
 		} catch (e) {
-			db = require(DBPath);
+			bot.db = require(DBPath);
 			console.error("Failed To Update the DB: " + e);
 			reject();
 		}
