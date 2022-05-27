@@ -3,7 +3,7 @@ process.on('message', msg => {
 
 	if (msg.type === 'activity') {
 		console.info(msg);
-		client.user.setPresence(msg.data);
+		bot.user.setPresence(msg.data);
 	}
 });
 
@@ -20,7 +20,7 @@ const startup = new Date();
 
 const DBPath = path.join(__dirname, '.', 'db.json');
 
-const client = new Discord.Client({
+const bot = new Discord.Client({
 	intents: ['GUILD_MESSAGES', 'GUILD_BANS', 'GUILD_MEMBERS', 'GUILD_INVITES', 'GUILDS'],
 	partials: ['MESSAGE', 'CHANNEL', 'GUILD_MEMBER', 'USER']
 });
@@ -55,14 +55,14 @@ sock.onmessage = (message) => {
 	}
 }
 
-client.once('ready', async () => {
-	console.info(`Logged in as ${client.user.tag}`);
-	client.channels.fetch(config.discord.reportChannel).then((channel) => {
+bot.once('ready', async () => {
+	console.info(`Logged in as ${bot.user.tag}`);
+	bot.channels.fetch(config.discord.reportChannel).then((channel) => {
 		reportChannel = channel
 	})
 	await updateDb();
 });
-client.on('messageCreate', async (message) => {
+bot.on('messageCreate', async (message) => {
 	if (message.author.bot) return;
 
 	const prefix = '$';
@@ -146,7 +146,7 @@ client.on('messageCreate', async (message) => {
 	if (message.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case 'botinfo':
-				client.shard.fetchClientValues('guilds.cache.size').then((value) => {
+				bot.shard.fetchClientValues('guilds.cache.size').then((value) => {
 					message.channel.send({
 						embeds: [{
 							title: 'Bot Info',
@@ -191,7 +191,7 @@ client.on('messageCreate', async (message) => {
 	}
 });
 
-client.login(config.discord.token);
+bot.login(config.discord.token);
 
 const updateDb = () => {
 	return new Promise(async (resolve, reject) => {
