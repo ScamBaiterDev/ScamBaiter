@@ -91,6 +91,7 @@ bot.on("messageCreate", async (message) => {
 		console.log("potscamurl: " + potscamurl);
 		// remove everything after the third slash
 		const removeEndingSlash = potscamurl.split("/")[2];
+		if (removeEndingSlash === undefined) continue;
 		const splited = removeEndingSlash.split(".");
 		const domain =
 			splited[splited.length - 2] + "." + splited[splited.length - 1];
