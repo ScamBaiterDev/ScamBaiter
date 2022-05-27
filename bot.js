@@ -92,7 +92,6 @@ bot.on("messageCreate", async (message) => {
 	let isScam = false;
 	let scamDomain = "";
 	for (const potscamurl of cleanMessage) {
-		if (cmd === "check") break;
 		// remove everything after the third slash
 		const removeEndingSlash = potscamurl.split("/")[2];
 		if (removeEndingSlash === undefined) continue;
