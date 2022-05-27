@@ -103,7 +103,6 @@ bot.on("messageCreate", async (message) => {
 		}
 	}
 
-	console.log(isScam);
 	if (!isScam) return;
 	if (message.deletable) await message.delete();
 
