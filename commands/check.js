@@ -9,6 +9,14 @@ module.exports = {
 			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
 		),
 	async execute(bot, thing, args) {
+		const invite = (() => {
+			if (bot.config.invite.length > 0) return bot.config.invite;
+			return bot.generateInvite({
+				permissions: ["ADMINISTRATOR"],
+				scopes: ["bot", "applications.commands"]
+			});
+		})();
+
 		let urlToCheck;
 		if (typeof thing === Discord.CommandInteraction) {
 			urlToCheck = thing.options.getString("scam_url", true);
@@ -24,7 +32,7 @@ module.exports = {
 		}
 
 		await thing.reply({ content: "Checking...", ephemeral: true }).then(thing2 => {
-			const editContent = `${scamDomain} is ${bot.db.includes(scamDomain) ? "" : "not "}a scam.`;
+			const editContent = `${scamDomain} is ${bot.db.includes(scamDomain) ? "" : "not "}a scam. \n\n Please reinvite using ${invite} for slashcommands to work as message commands are being deprecated.`;
 			if (typeof thing === Discord.CommandInteraction) return thing.editReply({ content: editContent, ephemeral: true });
 			else return thing2.edit({ content: editContent, ephemeral: true });
 		});

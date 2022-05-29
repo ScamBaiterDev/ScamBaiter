@@ -5,10 +5,13 @@ module.exports = {
 		.setName('invite')
 		.setDescription('Gives the bot invite link.'),
 	async execute(bot, thing) {
-		let invite = bot.config.invite ?? bot.generateInvite({
-			permissions: ["ADMINISTRATOR"],
-			scopes: ["bot", "applications.commands"]
-		});
+		const invite = (() => {
+			if (bot.config.invite.length > 0) return bot.config.invite;
+			return bot.generateInvite({
+				permissions: ["ADMINISTRATOR"],
+				scopes: ["bot", "applications.commands"]
+			});
+		})();
 
 		return thing.reply(invite);
 	}

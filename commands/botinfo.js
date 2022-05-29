@@ -16,6 +16,14 @@ module.exports = {
 		.setName('botinfo')
 		.setDescription('Shows information about the bot.'),
 	async execute(bot, thing) {
+		const invite = (() => {
+			if (bot.config.invite.length > 0) return bot.config.invite;
+			return bot.generateInvite({
+				permissions: ["ADMINISTRATOR"],
+				scopes: ["bot", "applications.commands"]
+			});
+		})();
+
 		let hostname = os.hostname();
 		if (typeof thing === Discord.CommandInteraction) {
 			await thing.deferReply();
@@ -59,7 +67,7 @@ module.exports = {
 				},
 			])
 			.setFooter({
-				text: `Commit ${revision}`,
+				text: `Commit ${revision} | Please reinvite using ${invite} for slashcommands to work as message commands are being deprecated.`,
 			})
 			.setTimestamp();
 
