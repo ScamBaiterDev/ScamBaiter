@@ -24,13 +24,14 @@ const bot = new Discord.Client({
 		"GUILD_INVITES",
 		"GUILDS",
 	],
-	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
+	partials: ["MESSAGE", "USER", "GUILD_MEMBER"],
 });
 
 bot.lastUpdate = null;
 let lastIdPerGuild = [];
 let reportChannel = null;
 bot.db = [];
+bot.config = config;
 
 setInterval(() => {
 	bot.updateDB();
@@ -84,102 +85,119 @@ bot.once("ready", async () => {
 bot.on("messageCreate", async (message) => {
 	if (message.author.bot) return;
 
-	// Strip all discord formatting from the message
-	const cleanMessage = message.content.replace(/\*|_|~|`|<|>|\|/g, "").split("\n");
+	// Seperate Command and Arguments
+	const args = message.content.slice(1).split(/ +/);
+	const commandName = args.shift().toLowerCase();
 
-	if (message.channel.type === "DM") return;
+	const command = commands.get(commandName);
 
-	let isScam = false;
-	let scamDomain = "";
-	for (const potscamurl of cleanMessage) {
-		// remove everything after the third slash
-		const removeEndingSlash = potscamurl.split("/")[2];
-		if (removeEndingSlash === undefined) continue;
-		const splited = removeEndingSlash.split(".");
-		const domain =
-			splited[splited.length - 2] + "." + splited[splited.length - 1];
+	if (!command) {
+		const cleanMessage = message.content.replace(/\*|_|~|`|<|>|\|/g, "").split("\n");
 
-		// check if domain is in db
-		if (bot.db.includes(domain)) {
-			isScam = true;
-			scamDomain = domain;
-			break;
+		let isScam = false;
+		let scamDomain = "";
+		for (const potscamurl of cleanMessage) {
+			// remove everything after the third slash
+			const removeEndingSlash = potscamurl.split("/")[2];
+			if (removeEndingSlash === undefined) continue;
+			const splited = removeEndingSlash.split(".");
+			const domain =
+				splited[splited.length - 2] + "." + splited[splited.length - 1];
+
+			// check if domain is in db
+			if (bot.db.includes(domain)) {
+				isScam = true;
+				scamDomain = domain;
+				break;
+			}
+
 		}
 
+		if (isScam) {
+			if (message.deletable) await message.delete();
+
+			// Check if any of the elements in lastIdPerGuild matches the message id and guild id
+			if (
+				lastIdPerGuild.find(
+					(data) =>
+						data.userId === message.member.id && data.guildId === message.guild.id
+				)
+			) {
+				// Remove the element from the array
+				lastIdPerGuild = lastIdPerGuild.filter((id) => id.id !== message.id);
+				return;
+			} else {
+				// If the message is not in the array, add it
+				lastIdPerGuild.push({
+					messageId: message.id,
+					userId: message.author.id,
+					guildId: message.guild.id,
+				});
+			}
+
+			const scamEmbed = new Discord.MessageEmbed()
+				.setFields([
+					{
+						name: "User",
+						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+					},
+					{
+						name: "Message",
+						value: message.content,
+					},
+					{
+						name: "URL",
+						value: scamDomain,
+					},
+				])
+				.setAuthor({
+					name: message.guild.name,
+					icon_url: message.guild.iconURL(),
+				})
+				.setThumbnail(message.author.avatarURL())
+				.setFooter({
+					text: `${message.id}${message.member.bannable &&
+						!message.member.permissions.has("KICK_MEMBERS")
+						? " | Softbanned"
+						: " | Not Softbanned"
+						}`,
+				})
+				.setTimestamp();
+
+			await reportChannel.send({ embeds: [scamEmbed] }).then((reportMsg) => {
+				if (reportChannel.type === "GUILD_NEWS") {
+					reportMsg.crosspost();
+				}
+			});
+
+			if (
+				message.member.bannable &&
+				!message.member.permissions.has("KICK_MEMBERS")
+			) {
+				try {
+					await message.author.send(
+						config.discord.banMsg.replace("{guild}", message.guild.name)
+					);
+					await message.member.ban({ reason: "Scam detected", days: 1 });
+					await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
+					return;
+				} catch (e) {
+					console.error(e);
+				}
+			}
+		}
 	}
 
-	if (isScam) {
-		if (message.deletable) await message.delete();
+	// Check if contains prefix
+	if (!message.content.startsWith('$')) return;
 
-		// Check if any of the elements in lastIdPerGuild matches the message id and guild id
-		if (
-			lastIdPerGuild.find(
-				(data) =>
-					data.userId === message.member.id && data.guildId === message.guild.id
-			)
-		) {
-			// Remove the element from the array
-			lastIdPerGuild = lastIdPerGuild.filter((id) => id.id !== message.id);
-			return;
-		} else {
-			// If the message is not in the array, add it
-			lastIdPerGuild.push({
-				messageId: message.id,
-				userId: message.author.id,
-				guildId: message.guild.id,
-			});
-		}
+	if (!command) return;
 
-		const scamEmbed = new Discord.MessageEmbed()
-			.setFields([
-				{
-					name: "User",
-					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-				},
-				{
-					name: "Message",
-					value: message.content,
-				},
-				{
-					name: "URL",
-					value: scamDomain,
-				},
-			])
-			.setAuthor({
-				name: message.guild.name,
-				icon_url: message.guild.iconURL(),
-			})
-			.setThumbnail(message.author.avatarURL())
-			.setFooter({
-				text: `${message.id}${message.member.bannable &&
-					!message.member.permissions.has("KICK_MEMBERS")
-					? " | Softbanned"
-					: " | Not Softbanned"
-					}`,
-			})
-			.setTimestamp();
-
-		await reportChannel.send({ embeds: [scamEmbed] }).then((reportMsg) => {
-			if (reportChannel.type === "GUILD_NEWS") {
-				reportMsg.crosspost();
-			}
-		});
-
-		if (
-			message.member.bannable &&
-			!message.member.permissions.has("KICK_MEMBERS")
-		) {
-			try {
-				await message.author.send(
-					config.discord.banMsg.replace("{guild}", message.guild.name)
-				);
-				await message.member.ban({ reason: "Scam detected", days: 1 });
-				await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
-				return;
-			} catch (e) {
-				console.error(e);
-			}
-		}
+	try {
+		await command.execute(bot, message, args);
+	} catch (error) {
+		console.error(error);
+		await message.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 	}
 });
 

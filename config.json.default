@@ -14,4 +14,5 @@
 	},
 	"owners": ["put your user ID here"],
 	"scamApi": "https://phish.sinking.yachts/v2/all",
+	"invite": "<OPTIONAL>"
 }

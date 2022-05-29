@@ -1,4 +1,4 @@
-require('./deploy-commands');
+// require('./deploy-commands');
 
 const Discord = require('discord.js');
 const config = require("./config.json");

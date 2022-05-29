@@ -15,8 +15,20 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('botinfo')
 		.setDescription('Shows information about the bot.'),
-	async execute(bot, interaction) {
-		await interaction.deferReply();
+	async execute(bot, thing) {
+		let hostname = os.hostname();
+		if (typeof thing === Discord.CommandInteraction) {
+			await thing.deferReply();
+
+			if (!config.owners.includes(thing.user.id)) {
+				hostname = hostname.replace(/./g, "•");
+			}
+		} else {
+			if (!config.owners.includes(thing.author.id)) {
+				hostname = hostname.replace(/./g, "•");
+			}
+		}
+
 		const guildeSize = await bot.shard.fetchClientValues("guilds.cache.size");
 
 		const botInfoEmbed = new Discord.MessageEmbed()
@@ -25,10 +37,7 @@ module.exports = {
 				{
 					inline: false,
 					name: "System Information",
-					value: `Hostname: ${config.owners.includes(interaction.user.id)
-						? os.hostname()
-						: "••••••••"
-						}\nStarted <t:${Math.floor(
+					value: `Hostname: ${hostname}\nStarted <t:${Math.floor(
 							new Date() / 1000 - os.uptime()
 						)}:R>\nPlatform: ${os.platform
 						} ${os.release()}\nMemory: ${xbytes(
@@ -54,6 +63,7 @@ module.exports = {
 			})
 			.setTimestamp();
 
-		return interaction.editReply({ embeds: [botInfoEmbed] });
+			if (typeof thing === Discord.CommandInteraction) return thing.editReply({ embeds: [botInfoEmbed], ephemeral: true });
+			else return thing.reply({ embeds: [botInfoEmbed], ephemeral: true });
 	}
 }
