@@ -19,7 +19,7 @@ module.exports = {
 		const invite = (() => {
 			if (bot.config.invite.length > 0) return bot.config.invite;
 			return bot.generateInvite({
-				permissions: ["ADMINISTRATOR"],
+				permissions: 84992,
 				scopes: ["bot", "applications.commands"]
 			});
 		})();
