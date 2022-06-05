@@ -26,11 +26,12 @@ const DBPath = path.join(__dirname, ".", "db.json");
 
 const bot = new Discord.Client({
 	intents: [
-		"GUILD_MESSAGES",
-		"GUILD_BANS",
-		"GUILD_MEMBERS",
-		"GUILD_INVITES",
-		"GUILDS",
+		"GuildMessages",
+		"GuildBans",
+		"GuildMembers",
+		"GuildInvites",
+		"Guilds",
+		"MessageContent"
 	],
 	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
@@ -125,8 +126,21 @@ bot.on("messageCreate", async (message) => {
 			});
 		}
 
-		const scamEmbed = new Discord.MessageEmbed()
-			.setFields([
+		await reportChannel.send({ embeds: [{
+			"timestamp": new Date(),
+			"author": {
+				"name": message.guild.name,
+				"icon_url": message.guild.iconURL(),
+			},
+			"thumbnail": {"url": message.author.avatarURL()},
+			"footer": {
+				"text": `${message.id}${message.member.bannable &&
+					!message.member.permissions.has("KICK_MEMBERS")
+					? " | Softbanned"
+					: " | Not Softbanned"
+					}`
+			},
+			"fields": [
 				{
 					name: "User",
 					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
@@ -138,23 +152,9 @@ bot.on("messageCreate", async (message) => {
 				{
 					name: "URL",
 					value: scamDomain,
-				},
-			])
-			.setAuthor({
-				name: message.guild.name,
-				icon_url: message.guild.iconURL(),
-			})
-			.setThumbnail(message.author.avatarURL())
-			.setFooter({
-				text: `${message.id}${message.member.bannable &&
-					!message.member.permissions.has("KICK_MEMBERS")
-					? " | Softbanned"
-					: " | Not Softbanned"
-					}`,
-			})
-			.setTimestamp();
-
-		await reportChannel.send({ embeds: [scamEmbed] }).then((reportMsg) => {
+				}
+			]
+		}] }).then((reportMsg) => {
 			if (reportChannel.type === "GUILD_NEWS") {
 				reportMsg.crosspost();
 			}
