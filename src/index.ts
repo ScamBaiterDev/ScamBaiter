@@ -1,11 +1,11 @@
-const Discord = require('discord.js');
-const config = require("./config.json");
+import Discord, { PresenceData } from "discord.js";
+import config from "../config.json";
 
 const manager = new Discord.ShardingManager('./bot.js', {
 	token: config.discord.token
 });
 
-manager.on('shardCreate', shard => {
+manager.on('shardCreate', (shard) => {
 	console.log(`Launched shard ${shard.id}`)
 	shard.on("ready", () => {
 		console.log(`[DEBUG/SHARD] Shard ${shard.id} connected to Discord's Gateway.`)
@@ -24,3 +24,8 @@ manager.on('shardCreate', shard => {
 });
 
 manager.spawn();
+
+export interface ShardDataSent {
+	type: string;
+	data: PresenceData[];
+}
