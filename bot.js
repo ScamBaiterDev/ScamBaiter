@@ -8,7 +8,6 @@ process.on("message", (msg) => {
 });
 
 const os = require("os");
-const xbytes = require("xbytes");
 const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs/promises");
@@ -35,6 +34,8 @@ const bot = new Discord.Client({
 	],
 	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
+
+bot.login(config.discord.token);
 
 let lastUpdate = null;
 let lastIdPerGuild = [];
@@ -184,7 +185,7 @@ bot.on("messageCreate", async (message) => {
 			case "botinfo":
 				bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
 					const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
-					const systemInformationButReadable = `
+					const systemInformation = `
 					Hostname: ${hostname}
 					CPU: ${os.cpus()[0].model}
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
@@ -194,7 +195,7 @@ bot.on("messageCreate", async (message) => {
 					)}:R>
 					`;
 
-					const botInfoButReadable = `
+					const botInfo = `
 					Bot Name: "${bot.user.tag}"
 					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
 					Shard Count: ${bot.shard.count}
@@ -204,7 +205,7 @@ bot.on("messageCreate", async (message) => {
 					)}:D> <t:${Math.floor(
 						startup.getTime() / 1000
 					)}:T>
-					Current DB size: ${db.length.toString()}
+					Current DB size: ${db.length}
 					Last Database Update: <t:${Math.floor(
 						lastUpdate.getTime() / 1000
 					)}:R>
@@ -218,11 +219,11 @@ bot.on("messageCreate", async (message) => {
 								"fields": [
 									{
 										"name": "System Information",
-										"value": systemInformationButReadable
+										"value": systemInformation
 									},
 									{
 										"name": "Bot Info",
-										"value": botInfoButReadable
+										"value": botInfo
 									}
 								],
 								"footer": {
@@ -264,8 +265,6 @@ bot.on("messageCreate", async (message) => {
 		}
 	}
 });
-
-bot.login(config.discord.token);
 
 const updateDb = () => {
 	return new Promise(async (resolve, reject) => {
