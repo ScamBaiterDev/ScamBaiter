@@ -1,6 +1,7 @@
 {
 	"discord": {
-		"token": "",
+		"token": "bot token here",
+		"client_id": "bot user id here",
 		"status": {
 			"status": "online",
 			"activities": [{
@@ -13,5 +14,5 @@
 	},
 	"owners": ["put your user ID here"],
 	"scamApi": "https://phish.sinking.yachts/v2/all",
-	"inviteMsg": "https://discord.com/api/oauth2/authorize?client_id=932391527601287178&permissions=11285&scope=bot"
+	"invite": ""
 }
