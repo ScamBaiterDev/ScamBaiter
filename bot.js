@@ -10,6 +10,9 @@ process.on("message", (msg) => {
 const os = require("os");
 const xbytes = require("xbytes");
 const Discord = require("discord.js");
+const { REST } = require("@discordjs/rest");
+const { Routes } = require('discord-api-types/v10');
+
 const axios = require("axios");
 const fs = require("fs/promises");
 const WebSocket = require("ws");
@@ -72,7 +75,122 @@ bot.once("ready", async () => {
 		reportChannel = channel;
 	});
 	await updateDb();
+
+	const commands = [];
+	const everySlashiesData = [
+		new Discord.SlashCommandBuilder()
+			.setName('botinfo')
+			.setDescription('Shows information about the bot.'),
+		new Discord.SlashCommandBuilder()
+			.setName('check')
+			.setDescription('Checks a provided scam URL against the database.')
+			.addStringOption((option) =>
+				option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
+			),
+		new Discord.SlashCommandBuilder()
+			.setName('invite')
+			.setDescription('Gives the bot invite link.'),
+		new Discord.SlashCommandBuilder()
+			.setName('update_db')
+			.setDescription('Updates database')
+	];
+	everySlashiesData.forEach((slashies) => {
+		commands.push(slashies.toJSON());
+		console.log(slashies.toJSON());
+	});
+	const rest = new REST().setToken(config.discord.token);
+	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
+	.then(() => console.log('Successfully registered application commands.'))
+	.catch(console.error);
 });
+
+bot.once("interactionCreate", async (interaction) => {
+	if (!interaction.isCommand()) return;
+
+	switch (interaction.commandName) {
+		case "botinfo":
+			bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
+				const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
+				const systemInformationButReadable = `
+					Hostname: ${hostname}
+					CPU: ${os.cpus()[0].model}
+					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
+					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
+					Uptime: <t:${Math.floor(
+					new Date() / 1000 - os.uptime()
+				)}:R>
+					`;
+
+				const botInfoButReadable = `
+					Bot Name: "${bot.user.tag}"
+					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
+					Shard Count: ${bot.shard.count}
+					Shard Latency: ${Math.round(bot.ws.ping)}ms
+					Startup Time: <t:${Math.floor(
+					startup.getTime() / 1000
+				)}:D> <t:${Math.floor(
+					startup.getTime() / 1000
+				)}:T>
+					Current DB size: ${db.length.toString()}
+					Last Database Update: <t:${Math.floor(
+					lastUpdate.getTime() / 1000
+				)}:R>
+					`;
+
+				interaction
+					.reply({
+						embeds: [{
+							"title": "Bot Info",
+							"timestamp": new Date(),
+							"fields": [
+								{
+									"name": "System Information",
+									"value": systemInformationButReadable
+								},
+								{
+									"name": "Bot Info",
+									"value": botInfoButReadable
+								}
+							],
+							"footer": {
+								"text": `Commit ${revision}`
+							}
+						}],
+					})
+					.catch((err) => {
+						console.error(err);
+					});
+			});
+			break;
+		case "update_db":
+			if (!config.owners.includes(interaction.user.id)) return;
+			interaction.reply("Updating...").then(() => {
+				updateDb()
+					.then(() => interaction.editReply("Updated Database"))
+					.catch(() => interaction.editReply("Failed to Update Database"));
+			});
+			break;
+		case "invite":
+			await interaction.reply(config.inviteMsg);
+			break;
+		case "check":
+			if (!args[0])
+				return interaction.reply(
+					`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
+				);
+			await interaction.reply("Checking...").then(() =>
+				interaction
+					.editReply(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
+					.catch(() => {
+						interaction.editReply(
+							"An error occurred while checking that domain name!\nTry again later"
+						);
+					})
+			);
+			break;
+	}
+})
+
 bot.on("messageCreate", async (message) => {
 	if (message.author.bot) return;
 
