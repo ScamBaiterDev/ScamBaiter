@@ -103,7 +103,7 @@ bot.once("ready", async () => {
 	.catch(console.error);
 });
 
-bot.once("interactionCreate", async (interaction) => {
+bot.on("interactionCreate", async (interaction) => {
 	if (!interaction.isCommand()) return;
 
 	switch (interaction.commandName) {
