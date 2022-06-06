@@ -1,28 +1,29 @@
 {
-  "name": "scambaiter",
-  "version": "1.0.0",
-  "description": "ScamBaiter",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ChrisChrome/ScamBaiter.git"
-  },
-  "author": "",
-  "license": "SEE LICENSE IN LICENSE.md",
-  "bugs": {
-    "url": "https://github.com/ChrisChrome/ScamBaiter/issues"
-  },
-  "homepage": "https://github.com/ChrisChrome/ScamBaiter#readme",
-  "dependencies": {
-    "axios": "^0.24.0",
-    "discord.js": "^14.0.0-dev.1654387866-10009a4",
-    "ws": "^8.6.0",
-    "xbytes": "^1.7.0"
-  },
-  "devDependencies": {
-    "typescript": "^4.7.3"
-  }
+	"name": "scambaiter",
+	"version": "1.0.0",
+	"description": "ScamBaiter",
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "tsc -b",
+		"start": "node --enable-source-maps dist/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ChrisChrome/ScamBaiter.git"
+	},
+	"author": "",
+	"license": "SEE LICENSE IN LICENSE.md",
+	"bugs": {
+		"url": "https://github.com/ChrisChrome/ScamBaiter/issues"
+	},
+	"homepage": "https://github.com/ChrisChrome/ScamBaiter#readme",
+	"dependencies": {
+		"axios": "^0.24.0",
+		"discord.js": "^14.0.0-dev.1654519696-fba9710",
+		"ws": "^8.7.0",
+		"xbytes": "^1.7.0"
+	},
+	"devDependencies": {
+		"typescript": "^4.7.3"
+	}
 }

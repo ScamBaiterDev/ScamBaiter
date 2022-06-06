@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { db } from '../bot';
 import { CommandData } from '../types';
 
 module.exports = {
@@ -9,7 +10,8 @@ module.exports = {
 			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
 		),
 	async execute(bot, interaction) {
-		const urlToCheck = interaction.options.getString("scam_url") as string;
+		// @ts-ignore this is valid
+		const urlToCheck = interaction.options.getString("scam_url", true);
 		let scamDomain: string;
 		try {
 			scamDomain = new URL(urlToCheck).hostname;
@@ -18,7 +20,6 @@ module.exports = {
 		}
 
 		await interaction.reply({ content: "Checking...", ephemeral: true });
-		// @ts-ignore
-		return interaction.editReply({ content: `${scamDomain} is ${bot.db.includes(scamDomain) ? "" : "not "}a scam.` });
+		return interaction.editReply({ content: `${scamDomain} is ${db.includes(scamDomain) ? "" : "not "}a scam.` });
 	}
 } as CommandData;

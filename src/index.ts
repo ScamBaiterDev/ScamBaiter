@@ -1,7 +1,8 @@
-import Discord, { PresenceData } from "discord.js";
+import Discord, { ActivitiesOptions, PresenceData, PresenceStatusData } from "discord.js";
+import path from "node:path"
 import config from "../config.json";
 
-const manager = new Discord.ShardingManager('./bot.js', {
+const manager = new Discord.ShardingManager(path.join(__dirname, '.', 'bot.js'), {
 	token: config.discord.token
 });
 
@@ -10,16 +11,16 @@ manager.on('shardCreate', (shard) => {
 	shard.on("ready", () => {
 		console.log(`[DEBUG/SHARD] Shard ${shard.id} connected to Discord's Gateway.`)
 		// Sending the data to the shard.
-		shard.send({
+
+		const data: ShardDataSent = {
 			type: "activity",
 			data: {
-				status: config.discord.status.status,
-				activities: [{
-					type: config.discord.status.activities[0].type,
-					name: `${config.discord.status.activities[0].name} | Shard ${shard.id.toString()}`
-				}]
+				status: config.discord.status.status as PresenceStatusData,
+				activities: config.discord.status.activities as unknown as ActivitiesOptions[]
+				}
 			}
-		});
+
+		shard.send(data);
 	})
 });
 
@@ -27,5 +28,5 @@ manager.spawn();
 
 export interface ShardDataSent {
 	type: string;
-	data: PresenceData[];
+	data: PresenceData;
 }

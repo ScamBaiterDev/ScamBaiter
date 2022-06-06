@@ -4,7 +4,7 @@ process.on("message", (msg: ShardDataSent) => {
 
 	if (msg.type === "activity") {
 		console.info(msg);
-		bot.user.setPresence(msg.data[0]);
+		bot.user.setPresence(msg.data);
 	}
 });
 
@@ -12,6 +12,7 @@ import Discord, { OAuth2Scopes, Partials } from "discord.js";
 import axios from "axios";
 import fs from "fs";
 import WebSocket from "ws";
+// @ts-ignore Completely Valid SUSH TS
 import config from "../config.json";
 import path from "path";
 import { ShardDataSent } from ".";
@@ -48,17 +49,6 @@ export let lastIdPerGuild: {
 }[] = [];
 export let reportChannel: Discord.AnyChannel | null = null;
 export let db: string[] = [];
-export const perferedInvite = (() => {
-	if (config.inviteMsg.length > 0) return config.inviteMsg;
-	return bot.generateInvite({
-		permissions: ['Administrator'],
-		scopes: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands, OAuth2Scopes.ApplicationsCommandsUpdate]
-	});
-})();
-
-setInterval(() => {
-	updateDb();
-}, 1000 * 30 * 60);
 
 const commands = new Discord.Collection();
 const commandsPath = path.join(__dirname, 'commands');
@@ -75,6 +65,17 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('
 	}
 })();
 
+export const perferedInvite = (() => {
+	if (config.inviteMsg.length > 0) return config.inviteMsg;
+	return bot.generateInvite({
+		permissions: ['Administrator'],
+		scopes: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands, OAuth2Scopes.ApplicationsCommandsUpdate]
+	});
+});
+
+setInterval(() => {
+	updateDb();
+}, 1000 * 30 * 60);
 
 const sock = new WebSocket("wss://phish.sinking.yachts/feed", {
 	headers: {
@@ -127,6 +128,16 @@ bot.on("messageCreate", async (message) => {
 
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift()?.toLowerCase();
+
+	if (commands.get(cmd)) {
+		message.reply(`
+			:warning: Regular commands are not supported. :warning:\nRegular commands have been replaced in favor of slash commands.
+		\nThe bot will only respond to slash commands.
+		\nou can try typing \`/\` followed by the command name.
+		\nIf you can't find the command you're looking for, please contact the server owner and ask them to reinvite the bot using the link below:
+		\n${perferedInvite()}`);
+		return;
+	}
 
 
 	const scamUrls = message.content.match(

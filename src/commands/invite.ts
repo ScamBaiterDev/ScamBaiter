@@ -7,6 +7,6 @@ module.exports = {
 		.setName('invite')
 		.setDescription('Gives the bot invite link.'),
 	async execute(bot, interaction) {
-		return interaction.reply(perferedInvite);
+		return interaction.reply(perferedInvite());
 	}
 } as CommandData;
