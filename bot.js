@@ -10,8 +10,12 @@ process.on("message", (msg) => {
 const os = require("os");
 const xbytes = require("xbytes");
 const Discord = require("discord.js");
-const { REST } = require("@discordjs/rest");
-const { Routes } = require('discord-api-types/v10');
+const {
+	REST
+} = require("@discordjs/rest");
+const {
+	Routes
+} = require('discord-api-types/v10');
 
 const axios = require("axios");
 const fs = require("fs/promises");
@@ -79,28 +83,30 @@ bot.once("ready", async () => {
 	const commands = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
-			.setName('botinfo')
-			.setDescription('Shows information about the bot.'),
+		.setName('botinfo')
+		.setDescription('Shows information about the bot.'),
 		new Discord.SlashCommandBuilder()
-			.setName('check')
-			.setDescription('Checks a provided scam URL against the database.')
-			.addStringOption((option) =>
-				option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
-			),
+		.setName('check')
+		.setDescription('Checks a provided scam URL against the database.')
+		.addStringOption((option) =>
+			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
+		),
 		new Discord.SlashCommandBuilder()
-			.setName('invite')
-			.setDescription('Gives the bot invite link.'),
+		.setName('invite')
+		.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
-			.setName('update_db')
-			.setDescription('Updates database')
+		.setName('update_db')
+		.setDescription('Updates database')
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
-	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
-	.then(() => console.log('Successfully registered application commands.'))
-	.catch(console.error);
+	rest.put(Routes.applicationCommands(config.discord.client_id), {
+			body: commands
+		})
+		.then(() => console.log('Successfully registered application commands.'))
+		.catch(console.error);
 });
 
 bot.on("interactionCreate", async (interaction) => {
@@ -141,8 +147,7 @@ bot.on("interactionCreate", async (interaction) => {
 						embeds: [{
 							"title": "Bot Info",
 							"timestamp": new Date(),
-							"fields": [
-								{
+							"fields": [{
 									"name": "System Information",
 									"value": systemInformationButReadable
 								},
@@ -176,12 +181,12 @@ bot.on("interactionCreate", async (interaction) => {
 			const scamUrl = interaction.options.getString("scam_url", true);
 			await interaction.reply("Checking...").then(() =>
 				interaction
-					.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
-					.catch(() => {
-						interaction.editReply(
-							"An error occurred while checking that domain name!\nTry again later"
-						);
-					})
+				.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
+				.catch(() => {
+					interaction.editReply(
+						"An error occurred while checking that domain name!\nTry again later"
+					);
+				})
 			);
 			break;
 	}
@@ -200,20 +205,22 @@ bot.on("messageCreate", async (message) => {
 	if (message.channel.type === "DM") return;
 	let isScam = false;
 	let scamDomain = "";
-	for (const potscamurl of cleanMessage) {
-		if (cmd === "check") break;
-		// remove everything after the third slash
-		const removeEndingSlash = potscamurl.split("/")[2];
-		if (removeEndingSlash === undefined) continue;
-		const splited = removeEndingSlash.split(".");
-		const domain =
-			splited[splited.length - 2] + "." + splited[splited.length - 1];
+	if (cleanMessage) {
+		for (const potscamurl of cleanMessage) {
+			if (cmd === "check") break;
+			// remove everything after the third slash
+			const removeEndingSlash = potscamurl.split("/")[2];
+			if (removeEndingSlash === undefined) continue;
+			const splited = removeEndingSlash.split(".");
+			const domain =
+				splited[splited.length - 2] + "." + splited[splited.length - 1];
 
-		// check if domain is in db
-		if (db.includes(domain)) {
-			isScam = true;
-			scamDomain = domain;
-			break;
+			// check if domain is in db
+			if (db.includes(domain)) {
+				isScam = true;
+				scamDomain = domain;
+				break;
+			}
 		}
 	}
 
@@ -224,7 +231,7 @@ bot.on("messageCreate", async (message) => {
 		if (
 			lastIdPerGuild.find(
 				(data) =>
-					data.userId === message.member.id && data.guildId === message.guild.id
+				data.userId === message.member.id && data.guildId === message.guild.id
 			)
 		) {
 			// Remove the element from the array
@@ -246,7 +253,9 @@ bot.on("messageCreate", async (message) => {
 					"name": message.guild.name,
 					"icon_url": message.guild.iconURL(),
 				},
-				"thumbnail": { "url": message.author.avatarURL() },
+				"thumbnail": {
+					"url": message.author.avatarURL()
+				},
 				"footer": {
 					"text": `${message.id}${message.member.bannable &&
 						!message.member.permissions.has("KICK_MEMBERS")
@@ -254,8 +263,7 @@ bot.on("messageCreate", async (message) => {
 						: " | Not Softbanned"
 						}`
 				},
-				"fields": [
-					{
+				"fields": [{
 						name: "User",
 						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
 					},
@@ -283,7 +291,10 @@ bot.on("messageCreate", async (message) => {
 				await message.author.send(
 					config.discord.banMsg.replace("{guild}", message.guild.name)
 				);
-				await message.member.ban({ reason: "Scam detected", days: 1 });
+				await message.member.ban({
+					reason: "Scam detected",
+					days: 1
+				});
 				await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
 				return;
 			} catch (e) {
@@ -329,8 +340,7 @@ bot.on("messageCreate", async (message) => {
 							embeds: [{
 								"title": "Bot Info",
 								"timestamp": new Date(),
-								"fields": [
-									{
+								"fields": [{
 										"name": "System Information",
 										"value": systemInformationButReadable
 									},
@@ -367,12 +377,12 @@ bot.on("messageCreate", async (message) => {
 					);
 				await message.reply("Checking...").then((msg1) =>
 					msg1
-						.edit(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
-						.catch(() => {
-							msg1.edit(
-								"An error occurred while checking that domain name!\nTry again later"
-							);
-						})
+					.edit(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
+					.catch(() => {
+						msg1.edit(
+							"An error occurred while checking that domain name!\nTry again later"
+						);
+					})
 				);
 				break;
 		}
