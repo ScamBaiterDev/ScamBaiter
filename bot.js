@@ -96,7 +96,6 @@ bot.once("ready", async () => {
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
-		console.log(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
 	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
@@ -174,13 +173,10 @@ bot.once("interactionCreate", async (interaction) => {
 			await interaction.reply(config.inviteMsg);
 			break;
 		case "check":
-			if (!args[0])
-				return interaction.reply(
-					`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
-				);
+			const scamUrl = interaction.options.getString("scam_url", true);
 			await interaction.reply("Checking...").then(() =>
 				interaction
-					.editReply(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
+					.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
 					.catch(() => {
 						interaction.editReply(
 							"An error occurred while checking that domain name!\nTry again later"
