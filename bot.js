@@ -101,7 +101,6 @@ bot.on("messageCreate", async (message) => {
 			scamDomain = domain;
 			break;
 		}
-
 	}
 
 	if (isScam) {
@@ -126,35 +125,37 @@ bot.on("messageCreate", async (message) => {
 			});
 		}
 
-		await reportChannel.send({ embeds: [{
-			"timestamp": new Date(),
-			"author": {
-				"name": message.guild.name,
-				"icon_url": message.guild.iconURL(),
-			},
-			"thumbnail": {"url": message.author.avatarURL()},
-			"footer": {
-				"text": `${message.id}${message.member.bannable &&
-					!message.member.permissions.has("KICK_MEMBERS")
-					? " | Softbanned"
-					: " | Not Softbanned"
-					}`
-			},
-			"fields": [
-				{
-					name: "User",
-					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+		await reportChannel.send({
+			embeds: [{
+				"timestamp": new Date(),
+				"author": {
+					"name": message.guild.name,
+					"icon_url": message.guild.iconURL(),
 				},
-				{
-					name: "Message",
-					value: message.content,
+				"thumbnail": { "url": message.author.avatarURL() },
+				"footer": {
+					"text": `${message.id}${message.member.bannable &&
+						!message.member.permissions.has("KICK_MEMBERS")
+						? " | Softbanned"
+						: " | Not Softbanned"
+						}`
 				},
-				{
-					name: "URL",
-					value: scamDomain,
-				}
-			]
-		}] }).then((reportMsg) => {
+				"fields": [
+					{
+						name: "User",
+						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+					},
+					{
+						name: "Message",
+						value: message.content,
+					},
+					{
+						name: "URL",
+						value: scamDomain,
+					}
+				]
+			}]
+		}).then((reportMsg) => {
 			if (reportChannel.type === "GUILD_NEWS") {
 				reportMsg.crosspost();
 			}
@@ -181,7 +182,34 @@ bot.on("messageCreate", async (message) => {
 	if (message.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
-				bot.shard.fetchClientValues("guilds.cache.size").then((value) => {
+				bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
+					const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
+					const systemInformationButReadable = `
+					Hostname: ${hostname}
+					CPU: ${os.cpus()[0].model}
+					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
+					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
+					Uptime: <t:${Math.floor(
+						new Date() / 1000 - os.uptime()
+					)}:R>
+					`;
+
+					const botInfoButReadable = `
+					Bot Name: "${bot.user.tag}"
+					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
+					Shard Count: ${bot.shard.count}
+					Shard Latency: ${Math.round(bot.ws.ping)}ms
+					Startup Time: <t:${Math.floor(
+						startup.getTime() / 1000
+					)}:D> <t:${Math.floor(
+						startup.getTime() / 1000
+					)}:T>
+					Current DB size: ${db.length.toString()}
+					Last Database Update: <t:${Math.floor(
+						lastUpdate.getTime() / 1000
+					)}:R>
+					`;
+
 					message.channel
 						.send({
 							embeds: [{
@@ -190,27 +218,11 @@ bot.on("messageCreate", async (message) => {
 								"fields": [
 									{
 										"name": "System Information",
-										"value": `Hostname: ${config.owners.includes(message.author.id)
-											? os.hostname()
-											: "••••••••"
-											}\nStarted <t:${Math.floor(
-												new Date() / 1000 - os.uptime()
-											)}:R>\nPlatform: ${os.platform
-											} ${os.release()}\nMemory: ${xbytes(
-												os.totalmem() - os.freemem()
-											)}/${xbytes(os.totalmem())}`
+										"value": systemInformationButReadable
 									},
 									{
 										"name": "Bot Info",
-										"value": `Guild Count: ${value
-											.reduce((a, b) => a + b, 0)
-											.toString()}\nCurrent DB size: ${db.length.toString()}\nStartup Time: <t:${Math.floor(
-												startup.getTime() / 1000
-											)}:D> <t:${Math.floor(
-												startup.getTime() / 1000
-											)}:T>\nLast Database Update was <t:${Math.floor(
-												lastUpdate.getTime() / 1000
-											)}:R>`
+										"value": botInfoButReadable
 									}
 								],
 								"footer": {
