@@ -10,8 +10,12 @@ process.on("message", (msg) => {
 const os = require("os");
 const xbytes = require("xbytes");
 const Discord = require("discord.js");
-const { REST } = require("@discordjs/rest");
-const { Routes } = require('discord-api-types/v10');
+const {
+	REST
+} = require("@discordjs/rest");
+const {
+	Routes
+} = require('discord-api-types/v10');
 
 const axios = require("axios");
 const fs = require("fs/promises");
@@ -79,31 +83,33 @@ bot.once("ready", async () => {
 	const commands = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
-			.setName('botinfo')
-			.setDescription('Shows information about the bot.'),
+		.setName('botinfo')
+		.setDescription('Shows information about the bot.'),
 		new Discord.SlashCommandBuilder()
-			.setName('check')
-			.setDescription('Checks a provided scam URL against the database.')
-			.addStringOption((option) =>
-				option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
-			),
+		.setName('check')
+		.setDescription('Checks a provided scam URL against the database.')
+		.addStringOption((option) =>
+			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
+		),
 		new Discord.SlashCommandBuilder()
-			.setName('invite')
-			.setDescription('Gives the bot invite link.'),
+		.setName('invite')
+		.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
-			.setName('update_db')
-			.setDescription('Updates database')
+		.setName('update_db')
+		.setDescription('Updates database')
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
-	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
-	.then(() => console.log('Successfully registered application commands.'))
-	.catch(console.error);
+	rest.put(Routes.applicationCommands(config.discord.client_id), {
+			body: commands
+		})
+		.then(() => console.log('Successfully registered application commands.'))
+		.catch(console.error);
 });
 
-bot.once("interactionCreate", async (interaction) => {
+bot.on("interactionCreate", async (interaction) => {
 	if (!interaction.isCommand()) return;
 
 	switch (interaction.commandName) {
@@ -141,8 +147,7 @@ bot.once("interactionCreate", async (interaction) => {
 						embeds: [{
 							"title": "Bot Info",
 							"timestamp": new Date(),
-							"fields": [
-								{
+							"fields": [{
 									"name": "System Information",
 									"value": systemInformationButReadable
 								},
@@ -176,12 +181,12 @@ bot.once("interactionCreate", async (interaction) => {
 			const scamUrl = interaction.options.getString("scam_url", true);
 			await interaction.reply("Checking...").then(() =>
 				interaction
-					.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
-					.catch(() => {
-						interaction.editReply(
-							"An error occurred while checking that domain name!\nTry again later"
-						);
-					})
+				.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
+				.catch(() => {
+					interaction.editReply(
+						"An error occurred while checking that domain name!\nTry again later"
+					);
+				})
 			);
 			break;
 	}
@@ -199,7 +204,7 @@ bot.on("messageCreate", async (message) => {
 	if (message.channel.type === "DM") return;
 	let isScam = false;
 	let scamDomain = "";
-	if (cleanMessage !== null) {
+	if (cleanMessage) {
 		for (const potscamurl of cleanMessage) {
 			if (cmd === "check") break;
 			// remove everything after the third slash
