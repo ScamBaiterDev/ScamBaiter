@@ -102,9 +102,7 @@ bot.once("ready", async () => {
 		commands.push(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
-	rest.put(Routes.applicationCommands(config.discord.client_id), {
-			body: commands
-		})
+	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
 		.then(() => console.log('Successfully registered application commands.'))
 		.catch(console.error);
 });
@@ -199,14 +197,13 @@ bot.on("messageCreate", async (message) => {
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
 	// Strip all discord formatting from the message
-	const cleanMessage = message.content.match(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
+	const scamUrls = message.content.match(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
 	// TODO: DM Only Commands
 	if (message.channel.type === "DM") return;
 	let isScam = false;
 	let scamDomain = "";
-	if (cleanMessage) {
-		for (const potscamurl of cleanMessage) {
-			if (cmd === "check") break;
+	if (scamUrls !== null && cmd !== "check") {
+		for (const potscamurl of scamUrls) {
 			// remove everything after the third slash
 			const removeEndingSlash = potscamurl.split("/")[2];
 			if (removeEndingSlash === undefined) continue;
@@ -233,7 +230,7 @@ bot.on("messageCreate", async (message) => {
 			)
 		) {
 			// Remove the element from the array
-			lastIdPerGuild = lastIdPerGuild.filter((id) => id.id !== message.id);
+			lastIdPerGuild = lastIdPerGuild.filter((data) => data.messageId !== message.id);
 			return;
 		} else {
 			// If the message is not in the array, add it
@@ -256,7 +253,7 @@ bot.on("messageCreate", async (message) => {
 				},
 				"footer": {
 					"text": `${message.id}${message.member.bannable &&
-						!message.member.permissions.has("KICK_MEMBERS")
+						!message.member.permissions.has("KickMembers")
 						? " | Softbanned"
 						: " | Not Softbanned"
 						}`
@@ -276,14 +273,14 @@ bot.on("messageCreate", async (message) => {
 				]
 			}]
 		}).then((reportMsg) => {
-			if (reportChannel.type === "GUILD_NEWS") {
+			if (reportChannel.type === Discord.ChannelType.GuildNews || reportChannel.type === Discord.ChannelType.GuildNewsThread) {
 				reportMsg.crosspost();
 			}
 		});
 
 		if (
 			message.member.bannable &&
-			!message.member.permissions.has("KICK_MEMBERS")
+			!message.member.permissions.has("KickMembers")
 		) {
 			try {
 				await message.author.send(
