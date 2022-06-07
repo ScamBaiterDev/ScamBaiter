@@ -275,7 +275,7 @@ bot.on("messageCreate", async (message) => {
 				]
 			}]
 		}).then((reportMsg) => {
-			if (Discord.ChannelType.GuildNews || reportChannel?.type === Discord.ChannelType.GuildNewsThread) {
+			if (reportChannel.type === Discord.ChannelType.GuildNews || reportChannel.type === Discord.ChannelType.GuildNewsThread) {
 				reportMsg.crosspost();
 			}
 		});
