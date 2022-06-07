@@ -1,6 +1,7 @@
 {
 	"discord": {
 		"token": "",
+		"client_id": "",
 		"status": {
 			"status": "dnd",
 			"activities": [{
@@ -13,5 +14,5 @@
 	},
 	"owners": ["your user ID here"],
 	"scamApi": "https://phish.sinking.yachts/v2/all",
-	"inviteMsg": ""
+	"inviteMsg": "Replace with bot invite URL/message"
 }

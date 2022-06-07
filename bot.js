@@ -198,7 +198,6 @@ bot.on("messageCreate", async (message) => {
 	const cmd = args.shift().toLowerCase();
 	// Strip all discord formatting from the message
 	const scamUrls = message.content.match(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
-
 	// TODO: DM Only Commands
 	if (message.channel.type === "DM") return;
 	let isScam = false;
@@ -220,7 +219,6 @@ bot.on("messageCreate", async (message) => {
 			}
 		}
 	}
-
 	if (isScam) {
 		if (message.deletable) await message.delete();
 
