@@ -7,6 +7,8 @@ process.on("message", (msg) => {
 	}
 });
 
+const urlRegex = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
+
 const os = require("os");
 const xbytes = require("xbytes");
 const Discord = require("discord.js");
@@ -83,20 +85,20 @@ bot.once("ready", async () => {
 	const commands = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
-		.setName('botinfo')
-		.setDescription('Shows information about the bot.'),
+			.setName('botinfo')
+			.setDescription('Shows information about the bot.'),
 		new Discord.SlashCommandBuilder()
-		.setName('check')
-		.setDescription('Checks a provided scam URL against the database.')
-		.addStringOption((option) =>
-			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
-		),
+			.setName('check')
+			.setDescription('Checks a provided scam URL against the database.')
+			.addStringOption((option) =>
+				option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
+			),
 		new Discord.SlashCommandBuilder()
-		.setName('invite')
-		.setDescription('Gives the bot invite link.'),
+			.setName('invite')
+			.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
-		.setName('update_db')
-		.setDescription('Updates database')
+			.setName('update_db')
+			.setDescription('Updates database')
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
@@ -146,13 +148,13 @@ bot.on("interactionCreate", async (interaction) => {
 							"title": "Bot Info",
 							"timestamp": new Date(),
 							"fields": [{
-									"name": "System Information",
-									"value": systemInformationButReadable
-								},
-								{
-									"name": "Bot Info",
-									"value": botInfoButReadable
-								}
+								"name": "System Information",
+								"value": systemInformationButReadable
+							},
+							{
+								"name": "Bot Info",
+								"value": botInfoButReadable
+							}
 							],
 							"footer": {
 								"text": `Commit ${revision}`
@@ -177,29 +179,45 @@ bot.on("interactionCreate", async (interaction) => {
 			break;
 		case "check":
 			const scamUrl = interaction.options.getString("scam_url", true);
+			const matchedREgexThing = urlRegex.exec(scamUrl);
+			if (matchedREgexThing) {
+				const removeEndingSlash = matchedREgexThing[0].split("/")[2];
+				if (removeEndingSlash === undefined) return interaction.reply("Please provide a valid URL");
+				const splited = removeEndingSlash.split(".");
+				const domain =
+					splited[splited.length - 2] + "." + splited[splited.length - 1];
+				await interaction.reply("Checking...").then(() =>
+					interaction
+						.editReply(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
+						.catch(() => {
+							interaction.editReply(
+								"An error occurred while checking that domain name!\nTry again later"
+							);
+						})
+				);
+				return;
+			}
 			await interaction.reply("Checking...").then(() =>
 				interaction
-				.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
-				.catch(() => {
-					interaction.editReply(
-						"An error occurred while checking that domain name!\nTry again later"
-					);
-				})
+					.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
+					.catch(() => {
+						interaction.editReply(
+							"An error occurred while checking that domain name!\nTry again later"
+						);
+					})
 			);
 			break;
 	}
 })
 
 bot.on("messageCreate", async (message) => {
-	if (message.author.bot) return;
+	if (message.author.bot || message.channel.type === "DM") return;
 
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
-	// Strip all discord formatting from the message
-	const scamUrls = message.content.match(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
-	// TODO: DM Only Commands
-	if (message.channel.type === "DM") return;
+
+	const scamUrls = urlRegex.exec(message.content);
 	let isScam = false;
 	let scamDomain = "";
 	if (scamUrls !== null && cmd !== "check") {
@@ -226,7 +244,7 @@ bot.on("messageCreate", async (message) => {
 		if (
 			lastIdPerGuild.find(
 				(data) =>
-				data.userId === message.member.id && data.guildId === message.guild.id
+					data.userId === message.member.id && data.guildId === message.guild.id
 			)
 		) {
 			// Remove the element from the array
@@ -259,17 +277,17 @@ bot.on("messageCreate", async (message) => {
 						}`
 				},
 				"fields": [{
-						name: "User",
-						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-					},
-					{
-						name: "Message",
-						value: message.content,
-					},
-					{
-						name: "URL",
-						value: scamDomain,
-					}
+					name: "User",
+					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+				},
+				{
+					name: "Message",
+					value: message.content,
+				},
+				{
+					name: "URL",
+					value: scamDomain,
+				}
 				]
 			}]
 		}).then((reportMsg) => {
@@ -336,13 +354,13 @@ bot.on("messageCreate", async (message) => {
 								"title": "Bot Info",
 								"timestamp": new Date(),
 								"fields": [{
-										"name": "System Information",
-										"value": systemInformationButReadable
-									},
-									{
-										"name": "Bot Info",
-										"value": botInfoButReadable
-									}
+									"name": "System Information",
+									"value": systemInformationButReadable
+								},
+								{
+									"name": "Bot Info",
+									"value": botInfoButReadable
+								}
 								],
 								"footer": {
 									"text": `Commit ${revision}`
@@ -366,18 +384,38 @@ bot.on("messageCreate", async (message) => {
 				await message.reply(config.inviteMsg);
 				break;
 			case "check":
-				if (!args[0])
+				const urls = args[0];
+				if (!urls)
 					return message.reply(
 						`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
 					);
+
+				const matchedREgexThing = urlRegex.exec(urls);
+				if (matchedREgexThing) {
+					const removeEndingSlash = matchedREgexThing[0].split("/")[2];
+					if (removeEndingSlash === undefined) return interaction.reply("Please provide a valid URL");
+					const splited = removeEndingSlash.split(".");
+					const domain =
+						splited[splited.length - 2] + "." + splited[splited.length - 1];
+					await message.reply("Checking...").then(() =>
+						message
+							.edit(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
+							.catch(() => {
+								message.edit(
+									"An error occurred while checking that domain name!\nTry again later"
+								);
+							})
+					);
+					return;
+				}
 				await message.reply("Checking...").then((msg1) =>
 					msg1
-					.edit(`${args[0]} is ${db.includes(args[0]) ? "" : "not "}a scam.`)
-					.catch(() => {
-						msg1.edit(
-							"An error occurred while checking that domain name!\nTry again later"
-						);
-					})
+						.edit(`${urls} is ${db.includes(urls) ? "" : "not "}a scam.`)
+						.catch(() => {
+							msg1.edit(
+								"An error occurred while checking that domain name!\nTry again later"
+							);
+						})
 				);
 				break;
 		}
