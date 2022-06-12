@@ -212,7 +212,7 @@ bot.on("messageCreate", async (message) => {
 				splited[splited.length - 2] + "." + splited[splited.length - 1];
 
 			// check if domain is in db
-			if (db.includes(domain)) {
+			if (db.includes(domain) || db.includes(removeEndingSlash)) {
 				isScam = true;
 				scamDomain = domain;
 				break;
