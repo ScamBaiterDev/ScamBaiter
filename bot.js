@@ -65,11 +65,17 @@ sock.onopen = () => {
 
 sock.onmessage = (message) => {
 	const data = JSON.parse(message.data);
-	if (data.type === "add") {
-		// Get all the entries in "data.domains" array and push to db
-		data.domains.forEach((domain) => {
-			db.push(domain);
-		});
+	switch (data.type) {
+		case "add":
+			// Get all the entries in "data.domains" array and push to db
+			data.domains.forEach((domain) => {
+				db.push(domain);
+			});
+			break;
+		case "delete":
+			data.domains.forEach((domain) => {
+				db = db.filter(val=> val !== domain)
+			});
 	}
 };
 
@@ -187,7 +193,7 @@ bot.on("interactionCreate", async (interaction) => {
 				})
 			);
 			break;
-	}
+	} 
 })
 
 bot.on("messageCreate", async (message) => {
