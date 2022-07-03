@@ -342,7 +342,8 @@ bot.on("messageCreate", async (message) => {
 			})
 		}
 	})
-	message.embeds.forEach(embed => {
+	// This is broken af right now, if someone knows what I'm doing wrong feel free to open a PR!
+	/*message.embeds.forEach(embed => {
 		if (() => {
 				Jimp.read(embed.thumbnail.url).then(img => {
 					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
@@ -381,7 +382,7 @@ bot.on("messageCreate", async (message) => {
 				if(error) message.delete();
 			}
 		}
-	})
+	})*/
 
 	// Funky debug commands
 	if (message.content.toLowerCase().startsWith(prefix)) {
