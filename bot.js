@@ -44,7 +44,8 @@ const bot = new Discord.Client({
 	],
 	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
-
+const Jimp = require('jimp');
+const jsQR = require("jsqr");
 let lastUpdate = null;
 let lastIdPerGuild = [];
 let reportChannel = null;
@@ -216,6 +217,7 @@ bot.on("messageCreate", async (message) => {
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
+	// QR Stuff
 
 	const scamUrls = urlRegex.exec(message.content);
 	let isScam = false;
@@ -314,6 +316,29 @@ bot.on("messageCreate", async (message) => {
 				console.error(e);
 			}
 		}
+	}
+
+	if(message.attachments) {
+		message.attachments.forEach((att) => {
+			if(att.contentType.startsWith("image")){
+				Jimp.read(att.attachment).then(img => {
+					code = jsQR(img.bitmap.data,img.bitmap.width,img.bitmap.height);
+					if(code) {
+						if(code.data.startsWith("https://discord.com/ra/")) {
+							// Do ban stuff
+							message.reply({
+								"embeds": [
+								{
+									"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+									"color": null
+								}
+								]
+							})
+						}
+					}
+				})
+			}
+		})
 	}
 
 	// Funky debug commands
