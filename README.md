@@ -1,4 +1,4 @@
-[![Add To Discord](https://img.shields.io/badge/-Add%20To%20Discord-7289DA?logo=discord&logoColor=fff&style=for-the-badge)](https://l.chrischro.me/sbinvite) [![Discord](https://img.shields.io/discord/932392800471879740?color=7289DA%20&label=Join%20our%20Discord&logo=discord&logoColor=fff&style=for-the-badge)](https://l.chrischro.me/sbdiscord)
+[![Add To Discord](https://img.shields.io/badge/-Add%20To%20Discord-7289DA?logo=discord&logoColor=fff&style=for-the-badge)](https://l.chrischro.me/sbinvite) [![Discord](https://img.shields.io/discord/932392800471879740?color=7289DA%20&label=Join%20our%20Discord&logo=discord&logoColor=fff&style=for-the-badge)](https://l.chrischro.me/sbdiscord) ![GitHub](https://img.shields.io/github/license/ScamBaiterDev/ScamBaiter?style=for-the-badge)
 # ScamBaiter
 A simple "add it and forget it" bot to automatically delete known scam links!
 
