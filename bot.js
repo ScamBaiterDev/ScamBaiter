@@ -214,7 +214,7 @@ bot.on("interactionCreate", async (interaction) => {
 })
 
 bot.on("messageCreate", async (message) => {
-	if(message.author.id == bot.user.id) return;
+	if (message.author.id == bot.user.id) return;
 
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
@@ -327,12 +327,16 @@ bot.on("messageCreate", async (message) => {
 				if (code) {
 					if (code.data.startsWith("https://discord.com/ra/")) {
 						// Do ban stuff
-						message.reply({
-							"embeds": [{
-								"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
-								"color": null
-							}]
-						})
+						try {
+							message.reply({
+								"embeds": [{
+									"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+									"color": null
+								}]
+							})
+						} catch (error) {
+
+						}
 					}
 				}
 			})
@@ -366,12 +370,16 @@ bot.on("messageCreate", async (message) => {
 				})
 				return false;
 			}) {
-			message.reply({
-				"embeds": [{
-					"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
-					"color": null
-				}]
-			})
+			try {
+				message.reply({
+					"embeds": [{
+						"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+						"color": null
+					}]
+				})
+			} catch (error) {
+
+			}
 		}
 	})
 
