@@ -335,7 +335,7 @@ bot.on("messageCreate", async (message) => {
 								}]
 							})
 						} catch (error) {
-
+							if(error) message.delete();
 						}
 					}
 				}
@@ -378,7 +378,7 @@ bot.on("messageCreate", async (message) => {
 					}]
 				})
 			} catch (error) {
-
+				if(error) message.delete();
 			}
 		}
 	})
