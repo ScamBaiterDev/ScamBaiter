@@ -86,26 +86,28 @@ bot.once("ready", async () => {
 	const commands = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
-			.setName('botinfo')
-			.setDescription('Shows information about the bot.'),
+		.setName('botinfo')
+		.setDescription('Shows information about the bot.'),
 		new Discord.SlashCommandBuilder()
-			.setName('check')
-			.setDescription('Checks a provided scam URL against the database.')
-			.addStringOption((option) =>
-				option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
-			),
+		.setName('check')
+		.setDescription('Checks a provided scam URL against the database.')
+		.addStringOption((option) =>
+			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
+		),
 		new Discord.SlashCommandBuilder()
-			.setName('invite')
-			.setDescription('Gives the bot invite link.'),
+		.setName('invite')
+		.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
-			.setName('update_db')
-			.setDescription('Updates database')
+		.setName('update_db')
+		.setDescription('Updates database')
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
-	rest.put(Routes.applicationCommands(config.discord.client_id), { body: commands })
+	rest.put(Routes.applicationCommands(config.discord.client_id), {
+			body: commands
+		})
 		.then(() => console.log('Successfully registered application commands.'))
 		.catch(console.error);
 });
@@ -149,13 +151,13 @@ bot.on("interactionCreate", async (interaction) => {
 							"title": "Bot Info",
 							"timestamp": new Date(),
 							"fields": [{
-								"name": "System Information",
-								"value": systemInformationButReadable
-							},
-							{
-								"name": "Bot Info",
-								"value": botInfoButReadable
-							}
+									"name": "System Information",
+									"value": systemInformationButReadable
+								},
+								{
+									"name": "Bot Info",
+									"value": botInfoButReadable
+								}
 							],
 							"footer": {
 								"text": `Commit ${revision}`
@@ -189,30 +191,30 @@ bot.on("interactionCreate", async (interaction) => {
 					splited[splited.length - 2] + "." + splited[splited.length - 1];
 				await interaction.reply("Checking...").then(() =>
 					interaction
-						.editReply(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
-						.catch(() => {
-							interaction.editReply(
-								"An error occurred while checking that domain name!\nTry again later"
-							);
-						})
-				);
-				return;
-			}
-			await interaction.reply("Checking...").then(() =>
-				interaction
-					.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
+					.editReply(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
 					.catch(() => {
 						interaction.editReply(
 							"An error occurred while checking that domain name!\nTry again later"
 						);
 					})
+				);
+				return;
+			}
+			await interaction.reply("Checking...").then(() =>
+				interaction
+				.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
+				.catch(() => {
+					interaction.editReply(
+						"An error occurred while checking that domain name!\nTry again later"
+					);
+				})
 			);
 			break;
 	}
 })
 
 bot.on("messageCreate", async (message) => {
-	if (message.author.bot || message.channel.type === "DM") return;
+	if(message.author.id == bot.user.id) return;
 
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
@@ -246,7 +248,7 @@ bot.on("messageCreate", async (message) => {
 		if (
 			lastIdPerGuild.find(
 				(data) =>
-					data.userId === message.member.id && data.guildId === message.guild.id
+				data.userId === message.member.id && data.guildId === message.guild.id
 			)
 		) {
 			// Remove the element from the array
@@ -279,17 +281,17 @@ bot.on("messageCreate", async (message) => {
 						}`
 				},
 				"fields": [{
-					name: "User",
-					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-				},
-				{
-					name: "Message",
-					value: message.content,
-				},
-				{
-					name: "URL",
-					value: scamDomain,
-				}
+						name: "User",
+						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+					},
+					{
+						name: "Message",
+						value: message.content,
+					},
+					{
+						name: "URL",
+						value: scamDomain,
+					}
 				]
 			}]
 		}).then((reportMsg) => {
@@ -318,28 +320,60 @@ bot.on("messageCreate", async (message) => {
 		}
 	}
 
-	if(message.attachments) {
-		message.attachments.forEach((att) => {
-			if(att.contentType.startsWith("image")){
-				Jimp.read(att.attachment).then(img => {
-					code = jsQR(img.bitmap.data,img.bitmap.width,img.bitmap.height);
-					if(code) {
-						if(code.data.startsWith("https://discord.com/ra/")) {
-							// Do ban stuff
-							message.reply({
-								"embeds": [
-								{
-									"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
-									"color": null
-								}
-								]
-							})
-						}
+	message.attachments.forEach((att) => {
+		if (att.contentType.startsWith("image")) {
+			Jimp.read(att.attachment).then(img => {
+				code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
+				if (code) {
+					if (code.data.startsWith("https://discord.com/ra/")) {
+						// Do ban stuff
+						message.reply({
+							"embeds": [{
+								"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+								"color": null
+							}]
+						})
+					}
+				}
+			})
+		}
+	})
+	message.embeds.forEach(embed => {
+		if (() => {
+				Jimp.read(embed.thumbnail.url).then(img => {
+					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
+					if (code) {
+						if (code.data.startsWith("https://discord.com/ra/")) return true;
 					}
 				})
-			}
-		})
-	}
+				Jimp.read(embed.image.url).then(img => {
+					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
+					if (code) {
+						if (code.data.startsWith("https://discord.com/ra/")) return true;
+					}
+				})
+				Jimp.read(embed.footer.iconURL).then(img => {
+					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
+					if (code) {
+						if (code.data.startsWith("https://discord.com/ra/")) return true;
+					}
+				})
+				Jimp.read(embed.author.iconURL).then(img => {
+					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
+					if (code) {
+						if (code.data.startsWith("https://discord.com/ra/")) return true;
+					}
+				})
+				return false;
+			}) {
+			message.reply({
+				"embeds": [{
+					"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+					"color": null
+				}]
+			})
+		}
+	})
 
 	// Funky debug commands
 	if (message.content.toLowerCase().startsWith(prefix)) {
@@ -379,13 +413,13 @@ bot.on("messageCreate", async (message) => {
 								"title": "Bot Info",
 								"timestamp": new Date(),
 								"fields": [{
-									"name": "System Information",
-									"value": systemInformationButReadable
-								},
-								{
-									"name": "Bot Info",
-									"value": botInfoButReadable
-								}
+										"name": "System Information",
+										"value": systemInformationButReadable
+									},
+									{
+										"name": "Bot Info",
+										"value": botInfoButReadable
+									}
 								],
 								"footer": {
 									"text": `Commit ${revision}`
@@ -424,23 +458,23 @@ bot.on("messageCreate", async (message) => {
 						splited[splited.length - 2] + "." + splited[splited.length - 1];
 					await message.reply("Checking...").then(() =>
 						message
-							.edit(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
-							.catch(() => {
-								message.edit(
-									"An error occurred while checking that domain name!\nTry again later"
-								);
-							})
+						.edit(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
+						.catch(() => {
+							message.edit(
+								"An error occurred while checking that domain name!\nTry again later"
+							);
+						})
 					);
 					return;
 				}
 				await message.reply("Checking...").then((msg1) =>
 					msg1
-						.edit(`${urls} is ${db.includes(urls) ? "" : "not "}a scam.`)
-						.catch(() => {
-							msg1.edit(
-								"An error occurred while checking that domain name!\nTry again later"
-							);
-						})
+					.edit(`${urls} is ${db.includes(urls) ? "" : "not "}a scam.`)
+					.catch(() => {
+						msg1.edit(
+							"An error occurred while checking that domain name!\nTry again later"
+						);
+					})
 				);
 				break;
 		}
