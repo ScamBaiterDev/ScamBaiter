@@ -226,6 +226,8 @@ bot.on("messageCreate", async (message) => {
 	let scamDomain = "";
 	if (scamUrls !== null && cmd !== "check") {
 		for (const potscamurl of scamUrls) {
+			// Somtimes potscamurl would be undefined causing a crash
+			if (potscamurl === undefined) break;
 			// remove everything after the third slash
 			const removeEndingSlash = potscamurl.split("/")[2];
 			if (removeEndingSlash === undefined) continue;
