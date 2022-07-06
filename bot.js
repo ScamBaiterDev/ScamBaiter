@@ -327,7 +327,7 @@ bot.on("messageCreate", async (message) => {
 			Jimp.read(att.attachment).then(img => {
 				code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
 				if (code) {
-					if (code.data.startsWith("https://discord.com/ra/")) {
+					if (code.data.startsWith("https://discord.com/ra/") || code.data.startsWith("https://discordapp.com/ra/")) {
 						// Do ban stuff
 						try {
 							message.reply({
