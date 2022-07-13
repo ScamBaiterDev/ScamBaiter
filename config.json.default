@@ -10,7 +10,8 @@
 			}]
 		},
 		"banMsg": "You got kicked from {guild} for sending a scam link!",
-		"reportChannel": "channel ID here"
+		"reportChannel": "channel ID here",
+		"shardConfig": {}
 	},
 	"owners": ["your user ID here"],
 	"scamApi": "https://phish.sinking.yachts/v2/all",

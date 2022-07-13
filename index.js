@@ -23,4 +23,4 @@ manager.on('shardCreate', shard => {
 	})
 });
 
-manager.spawn();
+manager.spawn(config.discord.shardConfig);
