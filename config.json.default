@@ -10,7 +10,9 @@
 			}]
 		},
 		"banMsg": "You got kicked from {guild} for sending a scam link!",
-		"reportChannel": "channel ID here",
+		"reportHook": "WebhookURLHere",
+		"reportChannel": "ChannelIDForCrosspost",
+		"reportCrosspost": false,
 		"shardConfig": {}
 	},
 	"owners": ["your user ID here"],

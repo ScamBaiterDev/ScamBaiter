@@ -44,11 +44,11 @@ const bot = new Discord.Client({
 	],
 	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
+const reportHook = new Discord.WebhookClient({"url": config.discord.reportHook})
 const Jimp = require('jimp');
 const jsQR = require("jsqr");
 let lastUpdate = null;
 let lastIdPerGuild = [];
-let reportChannel = null;
 let db = [];
 
 setInterval(() => {
@@ -78,9 +78,6 @@ sock.onmessage = (message) => {
 
 bot.once("ready", async () => {
 	console.info(`Logged in as ${bot.user.tag}`);
-	bot.channels.fetch(config.discord.reportChannel).then((channel) => {
-		reportChannel = channel;
-	});
 	await updateDb();
 
 	const commands = [];
@@ -265,7 +262,7 @@ bot.on("messageCreate", async (message) => {
 			});
 		}
 
-		await reportChannel.send({
+		await reportHook.send({
 			embeds: [{
 				"timestamp": new Date(),
 				"author": {
@@ -297,8 +294,9 @@ bot.on("messageCreate", async (message) => {
 				]
 			}]
 		}).then((reportMsg) => {
-			if (reportChannel.type === Discord.ChannelType.GuildNews || reportChannel.type === Discord.ChannelType.GuildNewsThread) {
-				reportMsg.crosspost();
+			if (config.discord.reportCrosspost) {
+				reportMsg.id
+				bot.channels.cache.get(config.discord.reportChannel).lastMessage.crosspost()
 			}
 		});
 
