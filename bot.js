@@ -70,9 +70,10 @@ sock.onmessage = (message) => {
 	const data = JSON.parse(message.data);
 	if (data.type === "add") {
 		// Get all the entries in "data.domains" array and push to db
-		data.domains.forEach((domain) => {
-			db.push(domain);
-		});
+		db.push(...data.domains);
+	} else if (data.type === "delete") {
+		// Get all the entries in "data.domains" array and remove from db
+		db = db.filter(item => !data.domains.includes(item));
 	}
 };
 
