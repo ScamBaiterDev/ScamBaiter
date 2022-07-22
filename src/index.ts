@@ -1,7 +1,8 @@
-const Discord = require('discord.js');
-const config = require("./config.json");
+import Discord from 'discord.js';
+import path from 'path';
+import config from "./config.json";
 
-const manager = new Discord.ShardingManager('./bot.js', {
+const manager = new Discord.ShardingManager(path.join(__dirname, '.', 'bot.js'), {
 	token: config.discord.token
 });
 
@@ -24,3 +25,8 @@ manager.on('shardCreate', shard => {
 });
 
 manager.spawn(config.discord.shardConfig);
+
+export interface ShardData {
+	type: 'activity';
+	data: Discord.PresenceData;
+}

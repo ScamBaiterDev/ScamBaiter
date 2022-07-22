@@ -1,29 +1,24 @@
-process.on("message", (msg) => {
+process.on("message", (msg: ShardData) => {
 	if (!msg.type) return false;
 
 	if (msg.type === "activity") {
 		console.info(msg);
-		bot.user.setPresence(msg.data);
+		bot.user?.setPresence(msg.data);
 	}
 });
 
 const urlRegex = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
 
-const os = require("os");
-const xbytes = require("xbytes");
-const Discord = require("discord.js");
-const {
-	REST
-} = require("@discordjs/rest");
-const {
-	Routes
-} = require('discord-api-types/v10');
+import os from "os";
+import Discord from "discord.js";
+import { REST } from "@discordjs/rest";
+import { Routes } from 'discord-api-types/v10';
 
-const axios = require("axios");
-const fs = require("fs/promises");
-const WebSocket = require("ws");
-const config = require("./config.json");
-const path = require("path");
+import axios from "axios";
+import fs from "fs/promises";
+import WebSocket from "ws";
+import config from "./config.json";
+import path from "path";
 const revision = require("child_process")
 	.execSync("git rev-parse HEAD")
 	.toString()
@@ -31,7 +26,7 @@ const revision = require("child_process")
 	.slice(0, 6);
 const startup = new Date();
 
-const DBPath = path.join(__dirname, ".", "db.json");
+const DBPath = path.join(__dirname, "..", "db.json");
 
 const bot = new Discord.Client({
 	intents: [
@@ -42,14 +37,15 @@ const bot = new Discord.Client({
 		"Guilds",
 		"MessageContent"
 	],
-	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
+	partials: [Discord.Partials.Channel, Discord.Partials.User, Discord.Partials.GuildMember, Discord.Partials.Message]// ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
 });
 const reportHook = new Discord.WebhookClient({"url": config.discord.reportHook})
-const Jimp = require('jimp');
-const jsQR = require("jsqr");
-let lastUpdate = null;
-let lastIdPerGuild = [];
-let db = [];
+import Jimp from 'jimp';
+import jsQR from "jsqr";
+import { ShardData } from "./index";
+let lastUpdate: Date | null = null;
+let lastIdPerGuild: any[] = [];
+let db: string[] = [];
 
 setInterval(() => {
 	updateDb();
@@ -67,7 +63,7 @@ sock.onopen = () => {
 };
 
 sock.onmessage = (message) => {
-	const data = JSON.parse(message.data);
+	const data = JSON.parse(message.data as string);
 	if (data.type === "add") {
 		// Get all the entries in "data.domains" array and push to db
 		db.push(...data.domains);
@@ -78,10 +74,10 @@ sock.onmessage = (message) => {
 };
 
 bot.once("ready", async () => {
-	console.info(`Logged in as ${bot.user.tag}`);
+	console.info(`Logged in as ${bot.user?.tag}`);
 	await updateDb();
 
-	const commands = [];
+	const commands: Discord.RESTPostAPIApplicationCommandsJSONBody[] = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
 		.setName('botinfo')
@@ -110,12 +106,13 @@ bot.once("ready", async () => {
 		.catch(console.error);
 });
 
-bot.on("interactionCreate", async (interaction) => {
-	if (!interaction.isCommand()) return;
+bot.on("interactionCreate", async (interaction): Promise<any> => {
+	if (interaction.type !== Discord.InteractionType.ApplicationCommand) return;
 
 	switch (interaction.commandName) {
 		case "botinfo":
-			bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
+			// @ts-ignore This is perfectly fine, but I don't want to deal with it
+			bot.shard?.fetchClientValues("guilds.cache.size").then((guildSizes: number[]) => {
 				const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
 				const systemInformationButReadable = `
 					Hostname: ${hostname}
@@ -123,14 +120,14 @@ bot.on("interactionCreate", async (interaction) => {
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
 					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
 					Uptime: <t:${Math.floor(
-					new Date() / 1000 - os.uptime()
+					Number(new Date()) / 1000 - os.uptime()
 				)}:R>
 					`;
 
 				const botInfoButReadable = `
-					Bot Name: "${bot.user.tag}"
+					Bot Name: "${bot.user?.tag}"
 					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
-					Shard Count: ${bot.shard.count}
+					Shard Count: ${bot.shard?.count}
 					Shard Latency: ${Math.round(bot.ws.ping)}ms
 					Startup Time: <t:${Math.floor(
 					startup.getTime() / 1000
@@ -139,7 +136,7 @@ bot.on("interactionCreate", async (interaction) => {
 				)}:T>
 					Current DB size: ${db.length.toString()}
 					Last Database Update: <t:${Math.floor(
-					lastUpdate.getTime() / 1000
+					lastUpdate?.getTime() ?? 0 / 1000
 				)}:R>
 					`;
 
@@ -147,7 +144,7 @@ bot.on("interactionCreate", async (interaction) => {
 					.reply({
 						embeds: [{
 							"title": "Bot Info",
-							"timestamp": new Date(),
+							"timestamp": new Date().toISOString(),
 							"fields": [{
 									"name": "System Information",
 									"value": systemInformationButReadable
@@ -162,7 +159,7 @@ bot.on("interactionCreate", async (interaction) => {
 							}
 						}],
 					})
-					.catch((err) => {
+					.catch((err: any) => {
 						console.error(err);
 					});
 			});
@@ -179,6 +176,7 @@ bot.on("interactionCreate", async (interaction) => {
 			await interaction.reply(config.inviteMsg);
 			break;
 		case "check":
+			// @ts-ignore
 			const scamUrl = interaction.options.getString("scam_url", true);
 			const matchedREgexThing = urlRegex.exec(scamUrl);
 			if (matchedREgexThing) {
@@ -211,12 +209,12 @@ bot.on("interactionCreate", async (interaction) => {
 	}
 })
 
-bot.on("messageCreate", async (message) => {
-	if (message.author.id == bot.user.id) return;
+bot.on("messageCreate", async (message): Promise<any> => {
+	if (message.author.id == bot.user?.id) return;
 
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
-	const cmd = args.shift().toLowerCase();
+	const cmd = args.shift()?.toLowerCase();
 	// QR Stuff
 
 	const scamUrls = urlRegex.exec(message.content);
@@ -248,7 +246,7 @@ bot.on("messageCreate", async (message) => {
 		if (
 			lastIdPerGuild.find(
 				(data) =>
-				data.userId === message.member.id && data.guildId === message.guild.id
+				data.userId === message.member?.id && data.guildId === message.guild?.id
 			)
 		) {
 			// Remove the element from the array
@@ -258,23 +256,23 @@ bot.on("messageCreate", async (message) => {
 			// If the message is not in the array, add it
 			lastIdPerGuild.push({
 				messageId: message.id,
-				userId: message.author.id,
-				guildId: message.guild.id,
+				userId: message.author?.id,
+				guildId: message.guild?.id,
 			});
 		}
 
 		await reportHook.send({
 			embeds: [{
-				"timestamp": new Date(),
+				"timestamp": new Date().toISOString(),
 				"author": {
-					"name": message.guild.name,
-					"icon_url": message.guild.iconURL(),
+					"name": message.guild?.name ?? "",
+					"icon_url": message.guild?.iconURL() ?? "",
 				},
 				"thumbnail": {
-					"url": message.author.avatarURL()
+					"url": message.author.avatarURL()!
 				},
 				"footer": {
-					"text": `${message.id}${message.member.bannable &&
+					"text": `${message.id}${message.member?.bannable &&
 						!message.member.permissions.has("KickMembers")
 						? " | Softbanned"
 						: " | Not Softbanned"
@@ -296,24 +294,23 @@ bot.on("messageCreate", async (message) => {
 			}]
 		}).then((reportMsg) => {
 			if (config.discord.reportCrosspost) {
-				reportMsg.id
-				bot.channels.cache.get(config.discord.reportChannel).lastMessage.crosspost()
+				// bot.channels.cache.get(config.discord.reportChannel).crosspost()
 			}
 		});
 
 		if (
-			message.member.bannable &&
-			!message.member.permissions.has("KickMembers")
+			message.member?.bannable &&
+			!message.member?.permissions.has("KickMembers")
 		) {
 			try {
 				await message.author.send(
-					config.discord.banMsg.replace("{guild}", message.guild.name)
+					config.discord.banMsg.replace("{guild}", message.guild!.name)
 				);
 				await message.member.ban({
 					reason: "Scam detected",
-					days: 1
+					deleteMessageDays: 1
 				});
-				await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
+				await message.guild?.bans.remove(message.author.id, "AntiScam - Softban");
 				return;
 			} catch (e) {
 				console.error(e);
@@ -322,7 +319,25 @@ bot.on("messageCreate", async (message) => {
 	}
 
 	message.attachments.forEach((att) => {
-		if (att.contentType.startsWith("image")) {
+		if (att.contentType?.startsWith("image")) {
+			Jimp.read(att.url).then((image) => {
+				// use jsQR to read the QR code
+				const code = jsQR(image.bitmap.data as any, image.bitmap.width, image.bitmap.height);
+				if (code !== null) {
+					if (code.data.startsWith("https://discord.com/ra/") || code.data.startsWith("https://discordapp.com/ra/")) {
+						try {
+							message.reply({
+								"embeds": [{
+									"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
+								}]
+							})
+						} catch (error) {
+							if(error) message.delete();
+						}
+					}
+				}
+			});
+			/*
 			Jimp.read(att.attachment).then(img => {
 				code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
 				if (code) {
@@ -341,6 +356,7 @@ bot.on("messageCreate", async (message) => {
 					}
 				}
 			})
+			*/
 		}
 	})
 	// This is broken af right now, if someone knows what I'm doing wrong feel free to open a PR!
@@ -389,7 +405,8 @@ bot.on("messageCreate", async (message) => {
 	if (message.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
-				bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
+				// @ts-ignore This is perfectly fine, but I don't want to deal with it
+				bot.shard?.fetchClientValues("guilds.cache.size").then((guildSizes: number[]) => {
 					const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
 					const systemInformationButReadable = `
 					Hostname: ${hostname}
@@ -397,14 +414,14 @@ bot.on("messageCreate", async (message) => {
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
 					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
 					Uptime: <t:${Math.floor(
-						new Date() / 1000 - os.uptime()
+						Number(new Date()) / 1000 - os.uptime()
 					)}:R>
 					`;
 
 					const botInfoButReadable = `
-					Bot Name: "${bot.user.tag}"
+					Bot Name: "${bot.user?.tag}"
 					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
-					Shard Count: ${bot.shard.count}
+					Shard Count: ${bot.shard?.count}
 					Shard Latency: ${Math.round(bot.ws.ping)}ms
 					Startup Time: <t:${Math.floor(
 						startup.getTime() / 1000
@@ -413,7 +430,7 @@ bot.on("messageCreate", async (message) => {
 					)}:T>
 					Current DB size: ${db.length.toString()}
 					Last Database Update: <t:${Math.floor(
-						lastUpdate.getTime() / 1000
+						lastUpdate?.getTime() ?? 0 / 1000
 					)}:R>
 					`;
 
@@ -421,7 +438,7 @@ bot.on("messageCreate", async (message) => {
 						.send({
 							embeds: [{
 								"title": "Bot Info",
-								"timestamp": new Date(),
+								"timestamp": new Date().toISOString(),
 								"fields": [{
 										"name": "System Information",
 										"value": systemInformationButReadable
@@ -462,7 +479,7 @@ bot.on("messageCreate", async (message) => {
 				const matchedREgexThing = urlRegex.exec(urls);
 				if (matchedREgexThing) {
 					const removeEndingSlash = matchedREgexThing[0].split("/")[2];
-					if (removeEndingSlash === undefined) return interaction.reply("Please provide a valid URL");
+					if (removeEndingSlash === undefined) return message.reply("Please provide a valid URL");
 					const splited = removeEndingSlash.split(".");
 					const domain =
 						splited[splited.length - 2] + "." + splited[splited.length - 1];
@@ -494,7 +511,7 @@ bot.on("messageCreate", async (message) => {
 bot.login(config.discord.token);
 
 const updateDb = () => {
-	return new Promise(async (resolve, reject) => {
+	return new Promise<string[]>(async (resolve, reject) => {
 		try {
 			let scamAPIRESP = await axios.get(config.scamApi, {
 				headers: {
@@ -507,7 +524,7 @@ const updateDb = () => {
 			db = scamAPIRESP.data;
 			lastUpdate = new Date();
 			console.info("Updated DB!");
-			resolve();
+			resolve(scamAPIRESP.data);
 		} catch (e) {
 			db = require(DBPath);
 			console.error("Failed To Update the DB: " + e);
