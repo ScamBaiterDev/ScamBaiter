@@ -512,6 +512,7 @@ bot.login(config.discord.token);
 
 const updateDb = () => {
 	return new Promise<string[]>(async (resolve, reject) => {
+		console.timeStamp("Updateing database");
 		try {
 			let scamAPIRESP = await axios.get(config.scamApi, {
 				headers: {
