@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, Message, CommandInteraction, CacheType, EmbedBuilder } from 'discord.js'
+import { SlashCommandBuilder, Message, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { db, lastUpdate, startup } from '../bot'
 import os from 'node:os'
 import config from '../config.json'
@@ -15,7 +15,7 @@ export default class BotInfoCommand implements Command {
     .setName('botinfo')
     .setDescription('Shows information about the bot.')
 
-  chatInputRun = async (interaction: CommandInteraction<CacheType>) => {
+  chatInputRun = async (interaction: ChatInputCommandInteraction) => {
     const guildsSize = await interaction.client.shard?.fetchClientValues('guilds.cache.size') as number[]
     const guilds = guildsSize.reduce((a, b) => a + b, 0)
 

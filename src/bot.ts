@@ -97,7 +97,7 @@ bot.once('ready', async () => {
 })
 
 bot.on('interactionCreate', async (interaction): Promise<any> => {
-  if (interaction.type !== Discord.InteractionType.ApplicationCommand) return
+  if (!interaction.isChatInputCommand()) return
   if (commands.has(interaction.commandName)) return await commands.get(interaction.commandName)?.chatInputRun(interaction)
 })
 

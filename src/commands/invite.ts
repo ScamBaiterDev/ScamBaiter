@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, CacheType, Message } from 'discord.js'
+import { SlashCommandBuilder, ChatInputCommandInteraction, Message } from 'discord.js'
 import config from '../config.json'
 import type { Command } from '../types'
 
@@ -7,7 +7,7 @@ export default class InviteCommand implements Command {
     .setName('invite')
     .setDescription('Gives the bot invite link.')
 
-  chatInputRun = (interaction: CommandInteraction<CacheType>) => {
+  chatInputRun = (interaction: ChatInputCommandInteraction) => {
     return interaction.reply(config.inviteMsg)
   }
 

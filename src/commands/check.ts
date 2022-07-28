@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, Message, CommandInteraction } from 'discord.js'
+import { SlashCommandBuilder, Message, ChatInputCommandInteraction } from 'discord.js'
 import { db, prefix } from '../bot'
 import { urlRegex } from '../helpers'
 import type { Command } from '../types'
@@ -11,8 +11,7 @@ export default class PingCommand implements Command {
       option.setName('scam_url').setDescription('The domain to check.').setRequired(true)
     )
 
-  chatInputRun = async (interaction: CommandInteraction) => {
-    // @ts-ignore THIS IS VALID
+  chatInputRun = async (interaction: ChatInputCommandInteraction) => {
     const scamUrl = interaction.options.getString('scam_url', true)
     const regexResult = urlRegex.exec(scamUrl)
     if (regexResult) {

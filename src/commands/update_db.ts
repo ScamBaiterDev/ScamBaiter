@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, CacheType, Message } from 'discord.js'
+import { SlashCommandBuilder, ChatInputCommandInteraction, Message } from 'discord.js'
 import config from '../config.json'
 import { updateDb } from '../helpers'
 import type { Command } from '../types'
@@ -8,7 +8,7 @@ export default class UpdateDBCommand implements Command {
     .setName('update_db')
     .setDescription('Updates database')
 
-  chatInputRun = (interaction: CommandInteraction<CacheType>) => {
+  chatInputRun = (interaction: ChatInputCommandInteraction) => {
     if (!config.owners.includes(interaction.user.id)) return
     interaction.reply('Updating...').then(() => {
       updateDb()
