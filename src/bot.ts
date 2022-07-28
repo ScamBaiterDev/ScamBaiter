@@ -1,5 +1,4 @@
-import os from 'os'
-import Discord, { ChatInputCommandInteraction, Partials } from 'discord.js'
+import Discord, { Partials } from 'discord.js'
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v10'
 import WebSocket from 'ws'
@@ -8,11 +7,12 @@ import path from 'path'
 import Jimp from 'jimp'
 import jsQR from 'jsqr'
 import type { ShardData } from './index'
-import { updateDb, urlRegex } from './helpers'
+import { updateDb, urlRegex, walk } from './helpers'
+import type { Command } from './types'
 
 export const DBPath = path.join(__dirname, '..', 'db.json')
 export let db: string[] = []
-let lastUpdate: Date | null = null
+export let lastUpdate: Date | null = null
 export const setLastUpdate = (date: Date) => {
   lastUpdate = date
 }
@@ -22,6 +22,7 @@ export let lastIdPerGuild: {
     guildId: string,
 }[] = []
 export const startup = new Date()
+export const prefix = '$'
 
 process.on('message', (msg: ShardData) => {
   if (!msg.type) return
@@ -31,11 +32,6 @@ process.on('message', (msg: ShardData) => {
     bot.user?.setPresence(msg.data)
   }
 })
-const revision = require('child_process')
-  .execSync('git rev-parse HEAD')
-  .toString()
-  .trim()
-  .slice(0, 6)
 
 const bot = new Discord.Client({
   intents: [
@@ -76,31 +72,22 @@ sock.onmessage = (message) => {
   }
 }
 
+const commands = new Discord.Collection<string, Command>()
+
 bot.once('ready', async () => {
   console.info(`Logged in as ${bot.user?.tag}`)
   await updateDb()
 
-  const commands: Discord.RESTPostAPIApplicationCommandsJSONBody[] = []
-  const everySlashiesData = [
-    new Discord.SlashCommandBuilder()
-      .setName('botinfo')
-      .setDescription('Shows information about the bot.'),
-    new Discord.SlashCommandBuilder()
-      .setName('check')
-      .setDescription('Checks a provided scam URL against the database.')
-      .addStringOption((option) =>
-        option.setName('scam_url').setDescription('The domain to check.').setRequired(true)
-      ),
-    new Discord.SlashCommandBuilder()
-      .setName('invite')
-      .setDescription('Gives the bot invite link.'),
-    new Discord.SlashCommandBuilder()
-      .setName('update_db')
-      .setDescription('Updates database')
-  ]
-  everySlashiesData.forEach((slashies) => {
-    commands.push(slashies.toJSON())
-  })
+  const commandFiles = await walk(`${process.cwd()}/dist/commands`, /\.js$/)
+  const dataToSubmitToDiscord: Discord.RESTPostAPIApplicationCommandsJSONBody[] = []
+  for await (const file of commandFiles) {
+    const Command = (await import(file)).default
+    const CommandInstace: Command = new Command()
+
+    commands.set(CommandInstace.data.name, Command)
+    dataToSubmitToDiscord.push(CommandInstace.data.toJSON())
+  }
+
   const rest = new REST().setToken(config.discord.token)
   rest.put(Routes.applicationCommands(config.discord.client_id), {
     body: commands
@@ -111,111 +98,12 @@ bot.once('ready', async () => {
 
 bot.on('interactionCreate', async (interaction): Promise<any> => {
   if (interaction.type !== Discord.InteractionType.ApplicationCommand) return
-
-  switch (interaction.commandName) {
-    // eslint-disable-next-line no-lone-blocks
-    case 'botinfo': {
-      const guildsSize = await bot.shard?.fetchClientValues('guilds.cache.size') as number[]
-      const guilds = guildsSize.reduce((a, b) => a + b, 0)
-
-      const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, '•')
-      const systemInformationButReadable = `
-                    Hostname: ${hostname}
-                    CPU: ${os.cpus()[0].model}
-                    Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
-                    Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
-                    Uptime: <t:${Math.floor(
-                new Date().getTime() / 1000 - os.uptime()
-            )}:R>
-                    `
-
-      const botInfoButReadable = `
-                    Bot Name: "${bot.user?.tag}"
-                    Guild Count: ${guilds}
-                    Shard Count: ${bot.shard?.count}
-                    Shard Latency: ${Math.round(bot.ws.ping)}ms
-                    Startup Time: <t:${Math.floor(
-                startup.getTime() / 1000
-            )}:D> <t:${Math.floor(
-                startup.getTime() / 1000
-            )}:T>
-                    Current DB size: ${db.length.toString()}
-                    Last Database Update: <t:${Math.floor(
-                lastUpdate?.getTime() ?? 0 / 1000
-            )}:R>
-                    `
-
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('Bot Information')
-        .setFields({
-          name: 'System Information',
-          value: systemInformationButReadable
-        },
-        {
-          name: 'Bot Info',
-          value: botInfoButReadable
-        })
-        .setFooter({
-          text: `Commit ${revision}`
-        })
-      interaction
-        .reply({
-          embeds: [embed]
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-      break
-    };
-    case 'update_db':
-      if (!config.owners.includes(interaction.user.id)) return
-      interaction.reply('Updating...').then(() => {
-        updateDb()
-          .then(() => interaction.editReply('Updated Database'))
-          .catch(() => interaction.editReply('Failed to Update Database'))
-      })
-      break
-    case 'invite':
-      await interaction.reply(config.inviteMsg)
-      break
-    case 'check': {
-      const scamUrl = (interaction as ChatInputCommandInteraction).options.getString('scam_url', true)
-      const matchedREgexThing = urlRegex.exec(scamUrl)
-      if (matchedREgexThing) {
-        const removeEndingSlash = matchedREgexThing[0].split('/')[2]
-        if (removeEndingSlash === undefined) return interaction.reply('Please provide a valid URL')
-        const splited = removeEndingSlash.split('.')
-        const domain =
-                      splited[splited.length - 2] + '.' + splited[splited.length - 1]
-        await interaction.reply('Checking...').then(() =>
-          interaction
-            .editReply(`${domain} is ${db.includes(domain) ? '' : 'not '}a scam.`)
-            .catch(() => {
-              interaction.editReply(
-                'An error occurred while checking that domain name!\nTry again later'
-              )
-            })
-        )
-        return
-      }
-      await interaction.reply('Checking...').then(() =>
-        interaction
-          .editReply(`${scamUrl} is ${db.includes(scamUrl) ? '' : 'not '}a scam.`)
-          .catch(() => {
-            interaction.editReply(
-              'An error occurred while checking that domain name!\nTry again later'
-            )
-          })
-      )
-      break
-    }
-  }
+  if (commands.has(interaction.commandName)) return commands.get(interaction.commandName)?.chatInputRun(interaction)
 })
 
 bot.on('messageCreate', async (message): Promise<any> => {
   if (message.author.id === bot.user?.id || message.guild === undefined) return
 
-  const prefix = '$'
   const args = message.content.slice(prefix.length).trim().split(/ +/g)
   const cmd = args.shift()?.toLowerCase()
   // QR Stuff
@@ -388,111 +276,7 @@ bot.on('messageCreate', async (message): Promise<any> => {
 
   // Funky debug commands
   if (message.content.toLowerCase().startsWith(prefix)) {
-    switch (cmd) {
-      case 'botinfo':
-        // eslint-disable-next-line no-lone-blocks
-        {
-          const guildsSize = await bot.shard?.fetchClientValues('guilds.cache.size') as number[]
-          const guilds = guildsSize.reduce((a, b) => a + b, 0)
-
-          const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, '•')
-          const systemInformationButReadable = `
-                    Hostname: ${hostname}
-                    CPU: ${os.cpus()[0].model}
-                    Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
-                    Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
-                    Uptime: <t:${Math.floor(
-                        new Date().getTime() / 1000 - os.uptime()
-                    )}:R>
-                    `
-
-          const botInfoButReadable = `
-                    Bot Name: "${bot.user?.tag}"
-                    Guild Count: ${guilds}
-                    Shard Count: ${bot.shard?.count}
-                    Shard Latency: ${Math.round(bot.ws.ping)}ms
-                    Startup Time: <t:${Math.floor(
-                        startup.getTime() / 1000
-                    )}:D> <t:${Math.floor(
-                        startup.getTime() / 1000
-                    )}:T>
-                    Current DB size: ${db.length.toString()}
-                    Last Database Update: <t:${Math.floor(
-                        lastUpdate?.getTime() ?? 0 / 1000
-                    )}:R>
-                    `
-
-          const embed = new Discord.EmbedBuilder()
-            .setTitle('Bot Information')
-            .setFields({
-              name: 'System Information',
-              value: systemInformationButReadable
-            },
-            {
-              name: 'Bot Info',
-              value: botInfoButReadable
-            })
-            .setFooter({
-              text: `Commit ${revision}`
-            })
-          message.channel
-            .send({
-              embeds: [embed]
-            })
-            .catch((err) => {
-              console.error(err)
-            })
-        };
-        break
-      case 'update':
-        if (!config.owners.includes(message.author.id)) return
-        message.channel.send('Updating...').then((msg1) => {
-          updateDb()
-            .then(() => msg1.edit('Updated Database'))
-            .catch(() => msg1.edit('Failed to Update Database'))
-        })
-        break
-      case 'invite':
-        await message.reply(config.inviteMsg)
-        break
-      case 'check': {
-        const urls = args[0]
-        if (!urls) {
-          return message.reply(
-                        `Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
-          )
-        }
-
-        const matchedREgexThing = urlRegex.exec(urls)
-        if (matchedREgexThing) {
-          const removeEndingSlash = matchedREgexThing[0].split('/')[2]
-          if (removeEndingSlash === undefined) return message.reply('Please provide a valid URL')
-          const splited = removeEndingSlash.split('.')
-          const domain =
-                        splited[splited.length - 2] + '.' + splited[splited.length - 1]
-          await message.reply('Checking...').then(() =>
-            message
-              .edit(`${domain} is ${db.includes(domain) ? '' : 'not '}a scam.`)
-              .catch(() => {
-                message.edit(
-                  'An error occurred while checking that domain name!\nTry again later'
-                )
-              })
-          )
-          return
-        }
-        await message.reply('Checking...').then((msg1) =>
-          msg1
-            .edit(`${urls} is ${db.includes(urls) ? '' : 'not '}a scam.`)
-            .catch(() => {
-              msg1.edit(
-                'An error occurred while checking that domain name!\nTry again later'
-              )
-            })
-        )
-        break
-      }
-    }
+    if (commands.has(cmd!)) return commands.get(cmd!)?.messageRun(message, args)
   }
 })
 
