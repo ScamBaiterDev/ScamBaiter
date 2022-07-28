@@ -42,7 +42,7 @@ export default class PingCommand implements Command {
     }
   }
 
-  messageRun = (message: Message<boolean>, args: string[]) => {
+  messageRun = async (message: Message<boolean>, args: string[]) => {
     const urls = args[0]
     if (!urls) {
       return message.reply(
@@ -57,24 +57,24 @@ export default class PingCommand implements Command {
       const splited = removeEndingSlash.split('.')
       const domain =
                         splited[splited.length - 2] + '.' + splited[splited.length - 1]
-      return message.reply('Checking...').then(() =>
-        message
+      await message.reply('Checking...')
+      try {
+        return await message
           .edit(`${domain} is ${db.includes(domain) ? '' : 'not '}a scam.`)
-          .catch(() => {
-            message.edit(
-              'An error occurred while checking that domain name!\nTry again later'
-            )
-          })
+      } catch {
+        return message.edit(
+          'An error occurred while checking that domain name!\nTry again later'
+        )
+      }
+    }
+    const msg1 = await message.reply('Checking...')
+    try {
+      return await msg1
+        .edit(`${urls} is ${db.includes(urls) ? '' : 'not '}a scam.`)
+    } catch {
+      return msg1.edit(
+        'An error occurred while checking that domain name!\nTry again later'
       )
     }
-    return message.reply('Checking...').then((msg1) =>
-      msg1
-        .edit(`${urls} is ${db.includes(urls) ? '' : 'not '}a scam.`)
-        .catch(() => {
-          msg1.edit(
-            'An error occurred while checking that domain name!\nTry again later'
-          )
-        })
-    )
   }
 }

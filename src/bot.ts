@@ -98,7 +98,7 @@ bot.once('ready', async () => {
 
 bot.on('interactionCreate', async (interaction): Promise<any> => {
   if (interaction.type !== Discord.InteractionType.ApplicationCommand) return
-  if (commands.has(interaction.commandName)) return commands.get(interaction.commandName)?.chatInputRun(interaction)
+  if (commands.has(interaction.commandName)) return await commands.get(interaction.commandName)?.chatInputRun(interaction)
 })
 
 bot.on('messageCreate', async (message): Promise<any> => {
@@ -276,7 +276,7 @@ bot.on('messageCreate', async (message): Promise<any> => {
 
   // Funky debug commands
   if (message.content.toLowerCase().startsWith(prefix)) {
-    if (commands.has(cmd!)) return commands.get(cmd!)?.messageRun(message, args)
+    if (commands.has(cmd!)) return await commands.get(cmd!)?.messageRun(message, args)
   }
 })
 
