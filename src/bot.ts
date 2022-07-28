@@ -90,7 +90,7 @@ bot.once('ready', async () => {
 
   const rest = new REST().setToken(config.discord.token)
   rest.put(Routes.applicationCommands(config.discord.client_id), {
-    body: commands
+    body: dataToSubmitToDiscord
   })
     .then(() => console.log('Successfully registered application commands.'))
     .catch(console.error)
