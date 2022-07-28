@@ -5,9 +5,9 @@ export const setLastUpdate = (date: Date) => {
 	lastUpdate = date;
 };
 export let lastIdPerGuild: {
-		messageId: string,
-		userId: string,
-		guildId: string,
+	messageId: string,
+	userId: string,
+	guildId: string,
 }[] = [];
 export const startup = new Date();
 
@@ -114,8 +114,10 @@ bot.on("interactionCreate", async (interaction): Promise<any> => {
 
 	switch (interaction.commandName) {
 		case "botinfo":
-			// @ts-ignore This is perfectly fine, but I don't want to deal with it
-			bot.shard?.fetchClientValues("guilds.cache.size").then((guildSizes: number[]) => {
+			{
+				const guildsSize = await bot.shard?.fetchClientValues("guilds.cache.size") as number[];
+				const guilds = guildsSize.reduce((a, b) => a + b, 0);
+
 				const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
 				const systemInformationButReadable = `
 					Hostname: ${hostname}
@@ -123,13 +125,13 @@ bot.on("interactionCreate", async (interaction): Promise<any> => {
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
 					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
 					Uptime: <t:${Math.floor(
-					Number(new Date()) / 1000 - os.uptime()
+					new Date().getTime() / 1000 - os.uptime()
 				)}:R>
 					`;
 
 				const botInfoButReadable = `
 					Bot Name: "${bot.user?.tag}"
-					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
+					Guild Count: ${guilds}
 					Shard Count: ${bot.shard?.count}
 					Shard Latency: ${Math.round(bot.ws.ping)}ms
 					Startup Time: <t:${Math.floor(
@@ -143,27 +145,27 @@ bot.on("interactionCreate", async (interaction): Promise<any> => {
 				)}:R>
 					`;
 
-					const embed = new Discord.EmbedBuilder()
-						.setTitle('Bot Information')
-						.setFields({
-							"name": "System Information",
-							"value": systemInformationButReadable
-						},
+				const embed = new Discord.EmbedBuilder()
+					.setTitle('Bot Information')
+					.setFields({
+						"name": "System Information",
+						"value": systemInformationButReadable
+					},
 						{
 							"name": "Bot Info",
 							"value": botInfoButReadable
 						})
-						.setFooter({
-							text: `Commit ${revision}`
-						})
+					.setFooter({
+						text: `Commit ${revision}`
+					})
 				interaction
 					.reply({
 						embeds: [embed],
 					})
-					.catch((err: any) => {
+					.catch((err) => {
 						console.error(err);
 					});
-			});
+			};
 			break;
 		case "update_db":
 			if (!config.owners.includes(interaction.user.id)) return;
@@ -388,8 +390,10 @@ bot.on("messageCreate", async (message): Promise<any> => {
 	if (message.content.toLowerCase().startsWith(prefix)) {
 		switch (cmd) {
 			case "botinfo":
-				// @ts-ignore This is perfectly fine, but I don't want to deal with it
-				bot.shard?.fetchClientValues("guilds.cache.size").then((guildSizes: number[]) => {
+				{
+					const guildsSize = await bot.shard?.fetchClientValues("guilds.cache.size") as number[];
+					const guilds = guildsSize.reduce((a, b) => a + b, 0);
+
 					const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
 					const systemInformationButReadable = `
 					Hostname: ${hostname}
@@ -397,13 +401,13 @@ bot.on("messageCreate", async (message): Promise<any> => {
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
 					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
 					Uptime: <t:${Math.floor(
-						Number(new Date()) / 1000 - os.uptime()
+						new Date().getTime() / 1000 - os.uptime()
 					)}:R>
 					`;
 
 					const botInfoButReadable = `
 					Bot Name: "${bot.user?.tag}"
-					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
+					Guild Count: ${guilds}
 					Shard Count: ${bot.shard?.count}
 					Shard Latency: ${Math.round(bot.ws.ping)}ms
 					Startup Time: <t:${Math.floor(
@@ -423,10 +427,10 @@ bot.on("messageCreate", async (message): Promise<any> => {
 							"name": "System Information",
 							"value": systemInformationButReadable
 						},
-						{
-							"name": "Bot Info",
-							"value": botInfoButReadable
-						})
+							{
+								"name": "Bot Info",
+								"value": botInfoButReadable
+							})
 						.setFooter({
 							text: `Commit ${revision}`
 						})
@@ -437,7 +441,7 @@ bot.on("messageCreate", async (message): Promise<any> => {
 						.catch((err) => {
 							console.error(err);
 						});
-				});
+				};
 				break;
 			case "update":
 				if (!config.owners.includes(message.author.id)) return;
