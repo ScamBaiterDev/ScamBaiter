@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"tsBuildInfoFile": "./dist/.tsbuildinfo", /* Specify the path to .tsbuildinfo incremental compilation file. */
+		"outDir": "./dist",
 		"allowSyntheticDefaultImports": true,
 		"alwaysStrict": true,
 		"declaration": true,
