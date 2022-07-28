@@ -3,7 +3,7 @@ import { db, prefix } from '../bot'
 import { urlRegex } from '../helpers'
 import type { Command } from '../types'
 
-export class PingCommand implements Command {
+export default class PingCommand implements Command {
   data = new SlashCommandBuilder()
     .setName('check')
     .setDescription('Checks a provided scam URL against the database.')

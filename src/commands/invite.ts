@@ -2,7 +2,7 @@ import { SlashCommandBuilder, CommandInteraction, CacheType, Message } from 'dis
 import config from '../config.json'
 import type { Command } from '../types'
 
-export class InviteCommand implements Command {
+export default class InviteCommand implements Command {
   data = new SlashCommandBuilder()
     .setName('invite')
     .setDescription('Gives the bot invite link.')
