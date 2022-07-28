@@ -8,7 +8,7 @@ export default class UpdateDBCommand implements Command {
     .setName('update_db')
     .setDescription('Updates database')
 
-  chatInputRun = (interaction: ChatInputCommandInteraction) => {
+  chatInputRun (interaction: ChatInputCommandInteraction) {
     if (!config.owners.includes(interaction.user.id)) return
     interaction.reply('Updating...').then(() => {
       updateDb()
@@ -17,7 +17,7 @@ export default class UpdateDBCommand implements Command {
     })
   }
 
-  messageRun = (message: Message<boolean>) => {
+  messageRun (message: Message<boolean>) {
     if (!config.owners.includes(message.author.id)) return
     message.reply('Updating...').then((msg) => {
       updateDb()

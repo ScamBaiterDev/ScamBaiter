@@ -15,7 +15,7 @@ export default class BotInfoCommand implements Command {
     .setName('botinfo')
     .setDescription('Shows information about the bot.')
 
-  chatInputRun = async (interaction: ChatInputCommandInteraction) => {
+  async chatInputRun (interaction: ChatInputCommandInteraction) {
     const guildsSize = await interaction.client.shard?.fetchClientValues('guilds.cache.size') as number[]
     const guilds = guildsSize.reduce((a, b) => a + b, 0)
 
@@ -68,7 +68,7 @@ export default class BotInfoCommand implements Command {
       })
   }
 
-  messageRun = async (message: Message<boolean>) => {
+  async messageRun (message: Message<boolean>) {
     const guildsSize = await message.client.shard?.fetchClientValues('guilds.cache.size') as number[]
     const guilds = guildsSize.reduce((a, b) => a + b, 0)
 

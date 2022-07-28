@@ -7,11 +7,11 @@ export default class InviteCommand implements Command {
     .setName('invite')
     .setDescription('Gives the bot invite link.')
 
-  chatInputRun = (interaction: ChatInputCommandInteraction) => {
+  chatInputRun (interaction: ChatInputCommandInteraction) {
     return interaction.reply(config.inviteMsg)
   }
 
-  messageRun = (message: Message<boolean>) => {
+  messageRun (message: Message<boolean>) {
     return message.reply(config.inviteMsg)
   }
 }

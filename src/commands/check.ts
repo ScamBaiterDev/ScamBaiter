@@ -11,7 +11,7 @@ export default class PingCommand implements Command {
       option.setName('scam_url').setDescription('The domain to check.').setRequired(true)
     )
 
-  chatInputRun = async (interaction: ChatInputCommandInteraction) => {
+  async chatInputRun (interaction: ChatInputCommandInteraction) {
     const scamUrl = interaction.options.getString('scam_url', true)
     const regexResult = urlRegex.exec(scamUrl)
     if (regexResult) {
@@ -41,7 +41,7 @@ export default class PingCommand implements Command {
     }
   }
 
-  messageRun = async (message: Message<boolean>, args: string[]) => {
+  async messageRun (message: Message<boolean>, args: string[]) {
     const urls = args[0]
     if (!urls) {
       return message.reply(
