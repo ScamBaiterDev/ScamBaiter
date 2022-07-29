@@ -220,7 +220,7 @@ bot.on("messageCreate", async (message) => {
 	const cmd = args.shift().toLowerCase();
 	if (DiscordInviteLinkRegex.test(message.content)) {
 		const regexResults = DiscordInviteLinkRegex.exec(message.content);
-		const inviteCode = regexResults[1];
+		const inviteCode = regexResults.groups[1];
 		const serverID = bot.fetchInvite(inviteCode).then((invite) => invite.guild.id)
 		axios.get(`https://api.phish.gg/server?id=${serverID}`).then(async (req) => {
 			if (res.match) {
