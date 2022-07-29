@@ -31,7 +31,7 @@ const revision = require("child_process")
 	.slice(0, 6);
 const startup = new Date();
 
-const DBPath = path.join(__dirname, ".", "db.json");
+const urlDBPath = path.join(__dirname, ".", "db.json");
 
 const bot = new Discord.Client({
 	intents: [
@@ -55,7 +55,7 @@ setInterval(() => {
 	updateDb();
 }, 1000 * 30 * 60);
 
-const sock = new WebSocket("wss://phish.sinking.yachts/feed", {
+const sock = new WebSocket(config.scams.scamSocket, {
 	headers: {
 		"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
 		"X-Identity": "ScamBaiter/1.0; Chris Chrome#9158",
@@ -496,20 +496,20 @@ bot.login(config.discord.token);
 const updateDb = () => {
 	return new Promise(async (resolve, reject) => {
 		try {
-			let scamAPIRESP = await axios.get(config.scamApi, {
+			let scamAPIRESP = await axios.get(config.scams.scamApi, {
 				headers: {
 					"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
 					// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
 				},
 			});
 
-			await fs.writeFile(DBPath, JSON.stringify(scamAPIRESP.data));
+			await fs.writeFile(urlDBPath, JSON.stringify(scamAPIRESP.data));
 			db = scamAPIRESP.data;
 			lastUpdate = new Date();
 			console.info("Updated DB!");
 			resolve();
 		} catch (e) {
-			db = require(DBPath);
+			db = require(urlDBPath);
 			console.error("Failed To Update the DB: " + e);
 			reject();
 		}
