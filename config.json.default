@@ -10,12 +10,15 @@
 			}]
 		},
 		"banMsg": "You got kicked from {guild} for sending a scam link!",
-		"reportHook": "WebhookURLHere",
-		"reportChannel": "ChannelIDForCrosspost",
-		"reportCrosspost": false,
+		"reportHook": "",
+		"reportChannel": "",
+		"reportCrosspost": true,
 		"shardConfig": {}
 	},
 	"owners": ["your user ID here"],
-	"scamApi": "https://phish.sinking.yachts/v2/all",
+	"scams": {
+		"scamApi": "https://phish.sinking.yachts/v2/all",
+		"scamSocket": "wss://phish.sinking.yachts/feed"
+	},
 	"inviteMsg": "Replace with bot invite URL/message"
 }
