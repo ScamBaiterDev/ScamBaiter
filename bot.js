@@ -257,7 +257,7 @@ bot.on("messageCreate", async (message) => {
 							},
 							{
 								name: "Invite",
-								value: invites.toString(),
+								value: invites[0],
 							}
 						]
 					}]
