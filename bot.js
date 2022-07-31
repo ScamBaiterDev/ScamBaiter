@@ -97,7 +97,13 @@ bot.once("ready", async () => {
 		.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
 		.setName('update_db')
-		.setDescription('Updates database')
+		.setDescription('Updates database'),
+		new Discord.SlashCommandBuilder()
+		.setName('report')
+		.setDescription('Report scam URLs!')
+		.addStringOption(
+			(option) => option.setName("url").setDescription("Full scam URL to report.").setRequired(true)
+		)
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
@@ -208,6 +214,7 @@ bot.on("interactionCreate", async (interaction) => {
 				})
 			);
 			break;
+		case "report"
 	}
 })
 
