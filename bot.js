@@ -9,7 +9,7 @@ process.on("message", (msg) => {
 
 const urlRegex = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
 const DiscordInviteLinkRegex = /(?:^|\b)discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/(?<code>[\w-]{2,255})(?:$|\b)/gi;
-
+let serverdb = [];
 const os = require("os");
 const xbytes = require("xbytes");
 const Discord = require("discord.js");
@@ -33,6 +33,7 @@ const revision = require("child_process")
 const startup = new Date();
 
 const urlDBPath = path.join(__dirname, ".", "db.json");
+const serverDBPath = path.join(__dirname, ".", "server_db.json");
 
 const bot = new Discord.Client({
 	intents: [
@@ -218,71 +219,72 @@ bot.on("messageCreate", async (message) => {
 	const prefix = "$";
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
 	const cmd = args.shift().toLowerCase();
-	if (DiscordInviteLinkRegex.test(message.content)) {
-		const regexResults = DiscordInviteLinkRegex.exec(message.content);
-		const inviteCode = regexResults.groups[1];
-		const serverID = bot.fetchInvite(inviteCode).then((invite) => invite.guild.id)
-		axios.get(`https://api.phish.gg/server?id=${serverID}`).then(async (req) => {
-			if (res.match) {
+
+	const invites = DiscordInviteLinkRegex.exec(message.content);
+	if (invites !== null) {
+		const inviteCode = invites.groups.code;
+		const serverID = await bot.fetchInvite(inviteCode).then((invite) => invite.guild.id)
+		serverdb.forEach(async (invite) => {
+			if(serverID !== invite.serverID) return;
+
+			try {
+				if (message.deletable) await message.delete();
+
+				await reportHook.send({
+					embeds: [{
+						"timestamp": new Date(),
+						"author": {
+							"name": message.guild.name,
+							"icon_url": message.guild.iconURL(),
+						},
+						"thumbnail": {
+							"url": message.author.avatarURL()
+						},
+						"footer": {
+							"text": `${message.id}${message.member.bannable &&
+								!message.member.permissions.has("KickMembers")
+								? " | Softbanned"
+								: " | Not Softbanned"
+								}`
+						},
+						"fields": [{
+								name: "User",
+								value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+							},
+							{
+								name: "Message",
+								value: message.content,
+							},
+							{
+								name: "Invite",
+								value: invites.toString(),
+							}
+						]
+					}]
+				})
+			} catch (err) {
+				console.error(err);
+			}
+
+			if (
+				message.member.bannable &&
+				!message.member.permissions.has("KickMembers")
+			) {
 				try {
-					if (message.deletable) await message.delete();
-
-					await reportHook.send({
-						embeds: [{
-							"timestamp": new Date(),
-							"author": {
-								"name": message.guild.name,
-								"icon_url": message.guild.iconURL(),
-							},
-							"thumbnail": {
-								"url": message.author.avatarURL()
-							},
-							"footer": {
-								"text": `${message.id}${message.member.bannable &&
-									!message.member.permissions.has("KickMembers")
-									? " | Softbanned"
-									: " | Not Softbanned"
-									}`
-							},
-							"fields": [{
-									name: "User",
-									value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-								},
-								{
-									name: "Message",
-									value: message.content,
-								},
-								{
-									name: "URL",
-									value: scamDomain,
-								}
-							]
-						}]
-					})
-				} catch (err) {
-					console.error(err);
-				}
-
-				if (
-					message.member.bannable &&
-					!message.member.permissions.has("KickMembers")
-				) {
-					try {
-						await message.author.send(
-							config.discord.banMsg.replace("{guild}", message.guild.name)
-						);
-						await message.member.ban({
-							reason: "Scam detected",
-							days: 1
-						});
-						await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
-						return;
-					} catch (e) {
-						console.error(e);
-					}
+					await message.author.send(
+						config.discord.banMsg.replace("{guild}", message.guild.name)
+					);
+					await message.member.ban({
+						reason: "Scam detected",
+						days: 1
+					});
+					await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
+					return;
+				} catch (e) {
+					console.error(e);
 				}
 			}
-		})
+		});
 	}
 
 	const scamUrls = urlRegex.exec(message.content);
@@ -570,13 +572,30 @@ const updateDb = () => {
 			});
 
 			await fs.writeFile(urlDBPath, JSON.stringify(scamAPIRESP.data));
-			db = scamAPIRESP.data;
+			scamdb = scamAPIRESP.data;
 			lastUpdate = new Date();
-			console.info("Updated DB!");
+			console.info("Updated scam DB!");
 			resolve();
 		} catch (e) {
-			db = require(urlDBPath);
-			console.error("Failed To Update the DB: " + e);
+			scamdb = require(urlDBPath);
+			console.error("Failed To Update the scam DB: " + e);
+			reject();
+		}
+		try {
+			let serverAPIRESP = await axios.get(config.scams.serverApi, {
+				headers: {
+					"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
+				}
+			});
+
+			await fs.writeFile(serverDBPath, JSON.stringify(serverAPIRESP.data))
+			serverdb = serverAPIRESP.data;
+			lastUpdate = new Date();
+			console.info("Updated server DB!");
+			resolve();
+		} catch (e) {
+			serverdb = require(serverDBPath)
+			console.error("Failed To Update the server DB: " + e);
 			reject();
 		}
 	});
