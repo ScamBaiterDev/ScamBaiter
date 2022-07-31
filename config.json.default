@@ -10,12 +10,21 @@
 			}]
 		},
 		"banMsg": "You got kicked from {guild} for sending a scam link!",
-		"reportHook": "WebhookURLHere",
-		"reportChannel": "ChannelIDForCrosspost",
+		"reportHook": "",
+		"reportChannel": "",
 		"reportCrosspost": false,
 		"shardConfig": {}
 	},
-	"owners": ["your user ID here"],
-	"scamApi": "https://phish.sinking.yachts/v2/all",
+	"owners": [""],
+	"scams": {
+		"scamApi": "https://phish.sinking.yachts/v2/all",
+		"scamSocket": "wss://phish.sinking.yachts/feed",
+		"serverApi": "https://api.phish.gg/servers/all",
+		"reporting": {
+			"_comment": "This will only work if you get a valid token from LostLuma. If no token is specified, the command will not register on your bot.",
+			"url": "https://yuri.bots.lostluma.dev/phish/report",
+			"auth": ""
+		}
+	},
 	"inviteMsg": "Replace with bot invite URL/message"
 }
