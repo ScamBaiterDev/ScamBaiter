@@ -258,3 +258,4 @@ dist
 # Project Specific
 config.json
 db.json
+server_db.json

@@ -1,57 +1,75 @@
-process.on("message", (msg) => {
+process.on('message', (msg) => {
 	if (!msg.type) return false;
 
-	if (msg.type === "activity") {
+	if (msg.type === 'activity') {
 		console.info(msg);
-		bot.user.setPresence(msg.data);
+		client.user?.setPresence(msg.data);
 	}
 });
 
-const urlRegex = new RegExp(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
-const DiscordInviteLinkRegex = /(?:^|\b)discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/(?<code>[\w-]{2,255})(?:$|\b)/gi;
-let serverdb = [];
-const os = require("os");
-const xbytes = require("xbytes");
-const Discord = require("discord.js");
+const os = require('os');
+const Discord = require('discord.js');
 const {
 	REST
-} = require("@discordjs/rest");
+} = require('@discordjs/rest');
 const {
 	Routes
 } = require('discord-api-types/v10');
 
-const axios = require("axios");
-const fs = require("fs/promises");
-const WebSocket = require("ws");
-const config = require("./config.json");
-const path = require("path");
-const revision = require("child_process")
-	.execSync("git rev-parse HEAD")
+const axios = require('axios').default;
+const fs = require('fs/promises');
+const WebSocket = require('ws');
+const config = require('./config.json');
+const path = require('path');
+
+// Useful Regex
+const urlRegex = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g;
+const DiscordInviteLinkRegex = /(?:^|\b)discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/(?<code>[\w-]{2,255})(?:$|\b)/gi;
+
+// Variables used throughout code
+/**
+ * @type {string[]}
+ */
+let serverdb = [];
+/**
+ * @type {{match: boolean; reason: string; serverID: string;}[]}
+ */
+let scamdb = [];
+/**
+ * @type {Date | null}
+ */
+let lastUpdate = null;
+/**
+ * @type {{messageID: string;userID: string;guildID: string}[]}
+ */
+let lastIdPerGuild = [];
+/**
+ * @type {string[]}
+ */
+let db = [];
+const revision = require('child_process')
+	.execSync('git rev-parse HEAD')
 	.toString()
 	.trim()
 	.slice(0, 6);
 const startup = new Date();
 
-const urlDBPath = path.join(__dirname, ".", "db.json");
-const serverDBPath = path.join(__dirname, ".", "server_db.json");
+const urlDBPath = path.join(__dirname, '.', 'db.json');
+const serverDBPath = path.join(__dirname, '.', 'server_db.json');
 
-const bot = new Discord.Client({
+const client = new Discord.Client({
 	intents: [
-		"GuildMessages",
-		"GuildBans",
-		"GuildMembers",
-		"GuildInvites",
-		"Guilds",
-		"MessageContent"
+		Discord.GatewayIntentBits.Guilds,
+		Discord.GatewayIntentBits.GuildMessages,
+		Discord.GatewayIntentBits.GuildMembers,
+		Discord.GatewayIntentBits.GuildBans,
+		Discord.GatewayIntentBits.MessageContent
 	],
-	partials: ["MESSAGE", "CHANNEL", "GUILD_MEMBER", "USER"],
+	partials: [Discord.Partials.Message, Discord.Partials.Channel],
 });
-const reportHook = new Discord.WebhookClient({"url": config.discord.reportHook})
+const reportHook = new Discord.WebhookClient({ url: config.discord.reportHook })
 const Jimp = require('jimp');
-const jsQR = require("jsqr");
-let lastUpdate = null;
-let lastIdPerGuild = [];
-let db = [];
+const jsQR = require('jsqr').default;
 
 setInterval(() => {
 	updateDb();
@@ -59,247 +77,242 @@ setInterval(() => {
 
 const sock = new WebSocket(config.scams.scamSocket, {
 	headers: {
-		"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
-		"X-Identity": "ScamBaiter/1.0; Chris Chrome#9158",
+		'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
+		'X-Identity': 'ScamBaiter/1.0; Chris Chrome#9158',
 	},
 });
 
 sock.onopen = () => {
-	console.log("Connected to WS");
+	console.log('Connected to WS');
 };
 
-sock.onmessage = (message) => {
+sock.onmessage = (/** @type {{ data: WebSocket.Data; }} */ message) => {
+	if (typeof message.data !== 'string') return;
+	/**
+	 * @type {{ domains: string[]; type: string; }}
+	 */
 	const data = JSON.parse(message.data);
-	if (data.type === "add") {
-		// Get all the entries in "data.domains" array and push to db
+	if (data.type === 'add') {
+		// Get all the entries in 'data.domains' array and push to db
 		db.push(...data.domains);
-	} else if (data.type === "delete") {
-		// Get all the entries in "data.domains" array and remove from db
+	} else if (data.type === 'delete') {
+		// Get all the entries in 'data.domains' array and remove from db
 		db = db.filter(item => !data.domains.includes(item));
 	}
 };
 
-bot.once("ready", async () => {
-	console.info(`Logged in as ${bot.user.tag}`);
+client.once('ready', async () => {
+	console.info(`Logged in as ${client.user?.tag}`);
 	await updateDb();
 
+	/**
+	 * @type {Discord.RESTPostAPIApplicationCommandsJSONBody[]}
+	 */
 	const commands = [];
 	const everySlashiesData = [
 		new Discord.SlashCommandBuilder()
-		.setName('botinfo')
-		.setDescription('Shows information about the bot.'),
+			.setName('botinfo')
+			.setDescription('Shows information about the bot.'),
 		new Discord.SlashCommandBuilder()
-		.setName('check')
-		.setDescription('Checks a provided scam URL against the database.')
-		.addStringOption((option) =>
-			option.setName("scam_url").setDescription("The domain to check.").setRequired(true)
-		),
+			.setName('check')
+			.setDescription('Checks a provided scam URL against the database.')
+			.addStringOption((option) =>
+				option.setName('text_to_check').setDescription('The domain to check.').setRequired(true)
+			),
 		new Discord.SlashCommandBuilder()
-		.setName('invite')
-		.setDescription('Gives the bot invite link.'),
+			.setName('invite')
+			.setDescription('Gives the bot invite link.'),
 		new Discord.SlashCommandBuilder()
-		.setName('update_db')
-		.setDescription('Updates database')
+			.setName('update_db')
+			.setDescription('Updates database')
 	];
 	everySlashiesData.forEach((slashies) => {
 		commands.push(slashies.toJSON());
 	});
 	const rest = new REST().setToken(config.discord.token);
 	rest.put(Routes.applicationCommands(config.discord.client_id), {
-			body: commands
-		})
+		body: commands
+	})
 		.then(() => console.log('Successfully registered application commands.'))
 		.catch(console.error);
 });
 
-bot.on("interactionCreate", async (interaction) => {
-	if (!interaction.isCommand()) return;
+client.on('interactionCreate', async (interaction) => {
+	if (!interaction.isChatInputCommand()) return;
 
 	switch (interaction.commandName) {
-		case "botinfo":
-			bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
-				const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
-				const systemInformationButReadable = `
+		case 'botinfo': {
+			if (lastUpdate === null) return;
+			const guildCacheSizes = await client.shard?.fetchClientValues('guilds.cache.size');
+			if (guildCacheSizes === undefined) throw new Error('Failed to fetch guild cache sizes');
+			const hostname = config.owners.includes(interaction.user.id) === true ? os.hostname() : os.hostname().replace(/./g, '•');
+
+			const systemInformationButReadable = `
 					Hostname: ${hostname}
 					CPU: ${os.cpus()[0].model}
 					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
 					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
 					Uptime: <t:${Math.floor(
-					new Date() / 1000 - os.uptime()
-				)}:R>
+				Date.now() / 1000 - os.uptime()
+			)}:R>
 					`;
 
-				const botInfoButReadable = `
-					Bot Name: "${bot.user.tag}"
-					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
-					Shard Count: ${bot.shard.count}
-					Shard Latency: ${Math.round(bot.ws.ping)}ms
+			const botInfoButReadable = `
+					Bot Name: '${client.user?.tag}'
+					Guild Count: ${guildCacheSizes.reduce((a, b) => a + b, 0)}
+					Shard Count: ${client.shard?.count}
+					Shard Latency: ${Math.round(client.ws.ping)}ms
 					Startup Time: <t:${Math.floor(
-					startup.getTime() / 1000
-				)}:D> <t:${Math.floor(
-					startup.getTime() / 1000
-				)}:T>
+				startup.getTime() / 1000
+			)}:D> <t:${Math.floor(
+				startup.getTime() / 1000
+			)}:T>
 					Current DB size: ${db.length.toString()}
 					Last Database Update: <t:${Math.floor(
-					lastUpdate.getTime() / 1000
-				)}:R>
+				lastUpdate.getTime() / 1000
+			)}:R>
 					`;
 
-				interaction
-					.reply({
-						embeds: [{
-							"title": "Bot Info",
-							"timestamp": new Date(),
-							"fields": [{
-									"name": "System Information",
-									"value": systemInformationButReadable
-								},
-								{
-									"name": "Bot Info",
-									"value": botInfoButReadable
-								}
-							],
-							"footer": {
-								"text": `Commit ${revision}`
-							}
-						}],
-					})
-					.catch((err) => {
-						console.error(err);
-					});
+			const embed = new Discord.EmbedBuilder()
+				.setTitle('Bot Information')
+				.setTimestamp(new Date())
+				.setFields([{
+					'name': 'System Information',
+					'value': systemInformationButReadable
+				},
+				{
+					'name': 'Bot Info',
+					'value': botInfoButReadable
+				}
+				])
+				.setFooter({
+					text: `Commit: ${revision}`
+				});
+
+			await interaction.reply({
+				embeds: [embed]
 			});
-			break;
-		case "update_db":
+			return;
+		}
+		case 'update_db': {
 			if (!config.owners.includes(interaction.user.id)) return;
-			interaction.reply("Updating...").then(() => {
+			await interaction.reply('Updating...').then(() => {
 				updateDb()
-					.then(() => interaction.editReply("Updated Database"))
-					.catch(() => interaction.editReply("Failed to Update Database"));
+					.then(() => interaction.editReply('Updated Database'))
+					.catch(() => interaction.editReply('Failed to Update Database'));
 			});
-			break;
-		case "invite":
+			return;
+		}
+		case 'invite': {
 			await interaction.reply(config.inviteMsg);
-			break;
-		case "check":
-			const scamUrl = interaction.options.getString("scam_url", true);
-			const matchedREgexThing = urlRegex.exec(scamUrl);
-			if (matchedREgexThing) {
-				const removeEndingSlash = matchedREgexThing[0].split("/")[2];
-				if (removeEndingSlash === undefined) return interaction.reply("Please provide a valid URL");
-				const splited = removeEndingSlash.split(".");
-				const domain =
-					splited[splited.length - 2] + "." + splited[splited.length - 1];
-				await interaction.reply("Checking...").then(() =>
-					interaction
-					.editReply(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
-					.catch(() => {
-						interaction.editReply(
-							"An error occurred while checking that domain name!\nTry again later"
-						);
-					})
-				);
+			return;
+		}
+		case 'check': {
+			const textToCheck = interaction.options.getString('text_to_check', true);
+
+			const urlRegexResults = urlRegex.exec(textToCheck);
+			if (urlRegexResults === null) {
+				await interaction.reply('No URLs found to check');
 				return;
 			}
-			await interaction.reply("Checking...").then(() =>
-				interaction
-				.editReply(`${scamUrl} is ${db.includes(scamUrl) ? "" : "not "}a scam.`)
-				.catch(() => {
-					interaction.editReply(
-						"An error occurred while checking that domain name!\nTry again later"
-					);
-				})
-			);
-			break;
+
+
+			/**
+			 * @type {string[]}
+			 */
+			const scamURLsFound = [];
+			urlRegexResults.forEach((result) => {
+				const removeEndingSlash = result.split('/')[2];
+					if (removeEndingSlash === undefined) return interaction.reply('Please provide a valid URL');
+					const splited = removeEndingSlash.split('.');
+					const domain =
+						splited[splited.length - 2] + '.' + splited[splited.length - 1];
+				if (db.includes(domain)) scamURLsFound.push(domain);
+			});
+			if (scamURLsFound.length === 0) await interaction.reply(`\`\`\`${textToCheck}\`\`\` \n Contains no scams`);
+			else if (scamURLsFound.length === 1) await interaction.reply(`${scamURLsFound[0]} is a scam`)
+			else await interaction.reply(`The following domains are scams: ${scamURLsFound.join(', ')}`);
+			return;	
+		}
 	}
-})
+});
 
-bot.on("messageCreate", async (message) => {
-	if (message.author.id == bot.user.id) return;
+const prefix = '$';
 
-	const prefix = "$";
+client.on('messageCreate', async (message) => {
+	if (message.author.bot) return;
 	const args = message.content.slice(prefix.length).trim().split(/ +/g);
-	const cmd = args.shift().toLowerCase();
+	const cmd = args.shift()?.toLowerCase();
 
 	const invites = DiscordInviteLinkRegex.exec(message.content);
-	if (invites !== null) {
+	if (invites !== null && invites.groups !== undefined) {
 		const inviteCode = invites.groups.code;
-		const serverID = await bot.fetchInvite(inviteCode).then((invite) => invite.guild.id)
-		serverdb.forEach(async (invite) => {
-			if(serverID !== invite.serverID) return;
+		const serverID = await client.fetchInvite(inviteCode).then((invite) => invite.guild?.id);
 
-			try {
-				if (message.deletable) await message.delete();
+		scamdb.forEach(async (invite) => {
+			if (serverID !== invite.serverID) return;
+			if (message.deletable) await message.delete();
 
-				await reportHook.send({
-					embeds: [{
-						"timestamp": new Date(),
-						"author": {
-							"name": message.guild.name,
-							"icon_url": message.guild.iconURL(),
-						},
-						"thumbnail": {
-							"url": message.author.avatarURL()
-						},
-						"footer": {
-							"text": `${message.id}${message.member.bannable &&
-								!message.member.permissions.has("KickMembers")
-								? " | Softbanned"
-								: " | Not Softbanned"
-								}`
-						},
-						"fields": [{
-								name: "User",
-								value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-							},
-							{
-								name: "Message",
-								value: message.content,
-							},
-							{
-								name: "Invite",
-								value: invites[0],
-							}
-						]
-					}]
+			const embed = new Discord.EmbedBuilder()
+				.setAuthor({
+					name: message.guild?.name ?? '',
+					iconURL: message.guild?.iconURL() ?? ''
 				})
-			} catch (err) {
-				console.error(err);
-			}
+				.setThumbnail(message.author.avatarURL())
+				.setFooter({
+					text: `${message.id}${message.member?.bannable &&
+						!message.member.permissions.has('KickMembers')
+						? ' | Softbanned'
+						: ' | Not Softbanned'
+						}`
+				})
+				.setFields([{
+					name: 'User',
+					value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+				},
+				{
+					name: 'Message',
+					value: message.content,
+				},
+				{
+					name: 'Invite',
+					value: invites[0],
+				}])
+				.setTimestamp(new Date());
+
+			await reportHook.send({ embeds: [embed] });
 
 			if (
-				message.member.bannable &&
-				!message.member.permissions.has("KickMembers")
+				message.member?.bannable &&
+				!message.member.permissions.has('KickMembers')
 			) {
-				try {
-					await message.author.send(
-						config.discord.banMsg.replace("{guild}", message.guild.name)
-					);
-					await message.member.ban({
-						reason: "Scam detected",
-						days: 1
-					});
-					await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
-					return;
-				} catch (e) {
-					console.error(e);
-				}
+				await message.author.send(
+					config.discord.banMsg.replace('{guild}', message.guild?.name ?? '')
+				);
+				await message.member.ban({
+					reason: 'Scam detected',
+					deleteMessageDays: 1
+				});
+				await message.guild?.bans.remove(message.author.id, 'AntiScam - Softban');
+				return;
 			}
 		});
 	}
 
 	const scamUrls = urlRegex.exec(message.content);
 	let isScam = false;
-	let scamDomain = "";
-	if (scamUrls !== null && cmd !== "check") {
+	let scamDomain = '';
+
+	if (scamUrls !== null && cmd !== 'check') {
 		for (const potscamurl of scamUrls) {
 			// Somtimes potscamurl would be undefined causing a crash
 			if (potscamurl === undefined) break;
 			// remove everything after the third slash
-			const removeEndingSlash = potscamurl.split("/")[2];
+			const removeEndingSlash = potscamurl.split('/')[2];
 			if (removeEndingSlash === undefined) continue;
-			const splited = removeEndingSlash.split(".");
+			const splited = removeEndingSlash.split('.');
 			const domain =
-				splited[splited.length - 2] + "." + splited[splited.length - 1];
+				splited[splited.length - 2] + '.' + splited[splited.length - 1];
 
 			// check if domain is in db
 			if (db.includes(domain) || db.includes(removeEndingSlash)) {
@@ -316,287 +329,221 @@ bot.on("messageCreate", async (message) => {
 		if (
 			lastIdPerGuild.find(
 				(data) =>
-				data.userId === message.member.id && data.guildId === message.guild.id
+					data.userID === message.member?.id && data.guildID === message.guild?.id
 			)
 		) {
 			// Remove the element from the array
-			lastIdPerGuild = lastIdPerGuild.filter((data) => data.messageId !== message.id);
+			lastIdPerGuild = lastIdPerGuild.filter((data) => data.messageID !== message.id);
 			return;
 		} else {
 			// If the message is not in the array, add it
 			lastIdPerGuild.push({
-				messageId: message.id,
-				userId: message.author.id,
-				guildId: message.guild.id,
+				messageID: message.id,
+				userID: message.author.id,
+				guildID: message.guild?.id ?? '',
 			});
 		}
 
+		const embed = new Discord.EmbedBuilder()
+			.setTimestamp(new Date())
+			.setAuthor({
+				name: message.guild?.name ?? '',
+				iconURL: message.guild?.iconURL() ?? ''
+			})
+			.setThumbnail(message.author.avatarURL())
+			.setFooter({
+				text: `${message.id}${message.member?.bannable &&
+					!message.member.permissions.has('KickMembers')
+					? ' | Softbanned'
+					: ' | Not Softbanned'
+					}`
+			})
+			.setFields([{
+				name: 'User',
+				value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
+			},
+			{
+				name: 'Message',
+				value: message.content,
+			},
+			{
+				name: 'URL',
+				value: scamDomain,
+			}]);
+
+
 		await reportHook.send({
-			embeds: [{
-				"timestamp": new Date(),
-				"author": {
-					"name": message.guild.name,
-					"icon_url": message.guild.iconURL(),
-				},
-				"thumbnail": {
-					"url": message.author.avatarURL()
-				},
-				"footer": {
-					"text": `${message.id}${message.member.bannable &&
-						!message.member.permissions.has("KickMembers")
-						? " | Softbanned"
-						: " | Not Softbanned"
-						}`
-				},
-				"fields": [{
-						name: "User",
-						value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
-					},
-					{
-						name: "Message",
-						value: message.content,
-					},
-					{
-						name: "URL",
-						value: scamDomain,
-					}
-				]
-			}]
-		}).then((reportMsg) => {
-			if (config.discord.reportCrosspost) {
-				reportMsg.id
-				bot.channels.cache.get(config.discord.reportChannel).lastMessage.crosspost()
-			}
+			embeds: [embed]
 		});
 
 		if (
-			message.member.bannable &&
-			!message.member.permissions.has("KickMembers")
+			message.member?.bannable &&
+			!message.member.permissions.has('KickMembers')
 		) {
-			try {
-				await message.author.send(
-					config.discord.banMsg.replace("{guild}", message.guild.name)
-				);
-				await message.member.ban({
-					reason: "Scam detected",
-					days: 1
-				});
-				await message.guild.bans.remove(message.author.id, "AntiScam - Softban");
-				return;
-			} catch (e) {
-				console.error(e);
-			}
+			await message.author.send(
+				config.discord.banMsg.replace('{guild}', message.guild?.name ?? '')
+			);
+			await message.member.ban({
+				reason: 'Scam detected',
+				deleteMessageDays: 1
+			});
+			await message.guild?.bans.remove(message.author.id, 'AntiScam - Softban');
+			return;
 		}
 	}
 
-	message.attachments.forEach((att) => {
-		if (att.contentType.startsWith("image")) {
-			Jimp.read(att.attachment).then(img => {
-				code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
-				if (code) {
-					if (code.data.startsWith("https://discord.com/ra/") || code.data.startsWith("https://discordapp.com/ra/")) {
-						// Do ban stuff
-						try {
-							message.reply({
-								"embeds": [{
-									"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
-									"color": null
-								}]
-							})
-						} catch (error) {
-							if(error) message.delete();
-						}
-					}
-				}
-			})
+	message.attachments.forEach(async (attachment) => {
+		if (!attachment.contentType?.startsWith('image')) return;
+		const image = await Jimp.read(attachment.url);
+		const code = jsQR(image.bitmap.data, image.bitmap.width, image.bitmap.height);
+		if (code === null) return;
+		if (code.data.startsWith('https://discord.com/ra/') || code.data.startsWith('https://discordapp.com/ra/')) {
+			message.reply({
+				'embeds': [{
+					'description': ':warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account',
+				}]
+			}).catch((err) => {
+				if (err && message.deletable) message.delete();
+			});
 		}
-	})
-	// This is broken af right now, if someone knows what I'm doing wrong feel free to open a PR!
-	/*message.embeds.forEach(embed => {
-		if (() => {
-				Jimp.read(embed.thumbnail.url).then(img => {
-					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
-					if (code) {
-						if (code.data.startsWith("https://discord.com/ra/")) return true;
-					}
-				})
-				Jimp.read(embed.image.url).then(img => {
-					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
-					if (code) {
-						if (code.data.startsWith("https://discord.com/ra/")) return true;
-					}
-				})
-				Jimp.read(embed.footer.iconURL).then(img => {
-					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
-					if (code) {
-						if (code.data.startsWith("https://discord.com/ra/")) return true;
-					}
-				})
-				Jimp.read(embed.author.iconURL).then(img => {
-					code = jsQR(img.bitmap.data, img.bitmap.width, img.bitmap.height);
-					if (code) {
-						if (code.data.startsWith("https://discord.com/ra/")) return true;
-					}
-				})
-				return false;
-			}) {
-			try {
-				message.reply({
-					"embeds": [{
-						"description": ":warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account",
-						"color": null
-					}]
-				})
-			} catch (error) {
-				if(error) message.delete();
-			}
-		}
-	})*/
+	});
 
-	// Funky debug commands
-	if (message.content.toLowerCase().startsWith(prefix)) {
-		switch (cmd) {
-			case "botinfo":
-				bot.shard.fetchClientValues("guilds.cache.size").then((guildSizes) => {
-					const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, "•");
-					const systemInformationButReadable = `
-					Hostname: ${hostname}
-					CPU: ${os.cpus()[0].model}
-					Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
-					Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
-					Uptime: <t:${Math.floor(
-						new Date() / 1000 - os.uptime()
-					)}:R>
-					`;
+	// Anything past here is command code
+	if (!message.content.toLowerCase().startsWith(prefix)) return;
 
-					const botInfoButReadable = `
-					Bot Name: "${bot.user.tag}"
-					Guild Count: ${guildSizes.reduce((a, b) => a + b, 0)}
-					Shard Count: ${bot.shard.count}
-					Shard Latency: ${Math.round(bot.ws.ping)}ms
-					Startup Time: <t:${Math.floor(
-						startup.getTime() / 1000
-					)}:D> <t:${Math.floor(
-						startup.getTime() / 1000
-					)}:T>
-					Current DB size: ${db.length.toString()}
-					Last Database Update: <t:${Math.floor(
-						lastUpdate.getTime() / 1000
-					)}:R>
-					`;
+	switch (cmd) {
+		case 'botinfo': {
+			if (lastUpdate === null) return;
+			const guildCacheSizes = await client.shard?.fetchClientValues('guilds.cache.size');
+			if (guildCacheSizes === undefined) throw new Error('Failed to fetch guild cache sizes');
+			const hostname = config.owners.includes(message.author.id) === true ? os.hostname() : os.hostname().replace(/./g, '•');
 
-					message.channel
-						.send({
-							embeds: [{
-								"title": "Bot Info",
-								"timestamp": new Date(),
-								"fields": [{
-										"name": "System Information",
-										"value": systemInformationButReadable
-									},
-									{
-										"name": "Bot Info",
-										"value": botInfoButReadable
-									}
-								],
-								"footer": {
-									"text": `Commit ${revision}`
-								}
-							}],
-						})
-						.catch((err) => {
-							console.error(err);
-						});
-				});
-				break;
-			case "update":
-				if (!config.owners.includes(message.author.id)) return;
-				message.channel.send("Updating...").then((msg1) => {
-					updateDb()
-						.then(() => msg1.edit("Updated Database"))
-						.catch(() => msg1.edit("Failed to Update Database"));
-				});
-				break;
-			case "invite":
-				await message.reply(config.inviteMsg);
-				break;
-			case "check":
-				const urls = args[0];
-				if (!urls)
-					return message.reply(
-						`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
-					);
+			const systemInformationButReadable = `
+			Hostname: ${hostname}
+			CPU: ${os.cpus()[0].model}
+			Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB
+			Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB
+			Uptime: <t:${Math.floor(
+				Date.now() / 1000 - os.uptime()
+			)}:R>
+			`;
 
-				const matchedREgexThing = urlRegex.exec(urls);
-				if (matchedREgexThing) {
-					const removeEndingSlash = matchedREgexThing[0].split("/")[2];
-					if (removeEndingSlash === undefined) return interaction.reply("Please provide a valid URL");
-					const splited = removeEndingSlash.split(".");
-					const domain =
-						splited[splited.length - 2] + "." + splited[splited.length - 1];
-					await message.reply("Checking...").then(() =>
-						message
-						.edit(`${domain} is ${db.includes(domain) ? "" : "not "}a scam.`)
-						.catch(() => {
-							message.edit(
-								"An error occurred while checking that domain name!\nTry again later"
-							);
-						})
-					);
-					return;
+			const botInfoButReadable = `
+			Bot Name: '${client.user?.tag}'
+			Guild Count: ${guildCacheSizes.reduce((a, b) => a + b, 0)}
+			Shard Count: ${client.shard?.count}
+			Shard Latency: ${Math.round(client.ws.ping)}ms
+			Startup Time: <t:${Math.floor(
+				startup.getTime() / 1000
+			)}:D> <t:${Math.floor(
+				startup.getTime() / 1000
+			)}:T>
+			Current DB size: ${db.length.toString()}
+			Last Database Update: <t:${Math.floor(
+				lastUpdate.getTime() / 1000
+			)}:R>
+			`;
+
+			const embed = new Discord.EmbedBuilder()
+				.setTitle('Bot Information')
+				.setTimestamp(new Date())
+				.setFields([{
+					'name': 'System Information',
+					'value': systemInformationButReadable
+				},
+				{
+					'name': 'Bot Info',
+					'value': botInfoButReadable
 				}
-				await message.reply("Checking...").then((msg1) =>
-					msg1
-					.edit(`${urls} is ${db.includes(urls) ? "" : "not "}a scam.`)
-					.catch(() => {
-						msg1.edit(
-							"An error occurred while checking that domain name!\nTry again later"
-						);
-					})
+				])
+				.setFooter({
+					text: `Commit: ${revision}`
+				});
+
+			await message.reply({
+				embeds: [embed]
+			});
+			return;
+		}
+		case 'update': {
+			if (!config.owners.includes(message.author.id)) return;
+			const tempMSG = await message.reply('Updating...')
+			updateDb()
+				.then(() => tempMSG.edit('Updated Database'))
+				.catch(() => tempMSG.edit('Failed to Update Database'));
+			return;
+		}
+		case 'invite': {
+			await message.reply(config.inviteMsg);
+			return;
+		}
+		case 'check': {
+			const textToCheck = args.join(' ');
+			if (!textToCheck) {
+				await message.reply(
+					`Please provide a domain name to check, not the full URL please\nExample: \`${prefix}check discordapp.com\``
 				);
-				break;
+				return;
+			}
+
+			const urlRegexResults = urlRegex.exec(textToCheck);
+			if (urlRegexResults === null) {
+				await message.reply('No URLs found to check');
+				return;
+			}
+
+
+			/**
+			 * @type {string[]}
+			 */
+			const scamURLsFound = [];
+			urlRegexResults.forEach((result) => {
+				const removeEndingSlash = result.split('/')[2];
+					if (removeEndingSlash === undefined) return message.reply('Please provide a valid URL');
+					const splited = removeEndingSlash.split('.');
+					const domain =
+						splited[splited.length - 2] + '.' + splited[splited.length - 1];
+				if (db.includes(domain)) scamURLsFound.push(domain);
+			});
+			if (scamURLsFound.length === 0) await message.reply(`\`\`\`${textToCheck}\`\`\` \n Contains no scams`);
+			else if (scamURLsFound.length === 1) await message.reply(`${scamURLsFound[0]} is a scam`)
+			else await message.reply(`The following domains are scams: ${scamURLsFound.join(', ')}`);			
 		}
 	}
 });
 
-bot.login(config.discord.token);
+client.login(config.discord.token).catch((err) => console.error(err));
 
-const updateDb = () => {
-	return new Promise(async (resolve, reject) => {
-		try {
-			let scamAPIRESP = await axios.get(config.scams.scamApi, {
-				headers: {
-					"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
-					// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
-				},
-			});
+const updateDb = async () => {
+	try {
+		let scamAPIRESP = await axios.get(config.scams.scamApi, {
+			headers: {
+				'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
+				// Mozilla/5.0 (compatible; <botname>/<botversion>; +<boturl>)
+			},
+		});
 
-			await fs.writeFile(urlDBPath, JSON.stringify(scamAPIRESP.data));
-			scamdb = scamAPIRESP.data;
-			lastUpdate = new Date();
-			console.info("Updated scam DB!");
-			resolve();
-		} catch (e) {
-			scamdb = require(urlDBPath);
-			console.error("Failed To Update the scam DB: " + e);
-			reject();
-		}
-		try {
-			let serverAPIRESP = await axios.get(config.scams.serverApi, {
-				headers: {
-					"User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
-				}
-			});
+		await fs.writeFile(urlDBPath, JSON.stringify(scamAPIRESP.data));
+		scamdb = scamAPIRESP.data;
+		lastUpdate = new Date();
+		console.info('Updated scam DB!');
+	} catch (e) {
+		scamdb = require(urlDBPath);
+		console.error('Failed To Update the scam DB: ' + e);
+	}
+	try {
+		let serverAPIRESP = await axios.get(config.scams.serverApi, {
+			headers: {
+				'User-Agent': 'ScamBaiter/1.0; Chris Chrome#9158',
+			}
+		});
 
-			await fs.writeFile(serverDBPath, JSON.stringify(serverAPIRESP.data))
-			serverdb = serverAPIRESP.data;
-			lastUpdate = new Date();
-			console.info("Updated server DB!");
-			resolve();
-		} catch (e) {
-			serverdb = require(serverDBPath)
-			console.error("Failed To Update the server DB: " + e);
-			reject();
-		}
-	});
+		await fs.writeFile(serverDBPath, JSON.stringify(serverAPIRESP.data))
+		serverdb = serverAPIRESP.data;
+		lastUpdate = new Date();
+		console.info('Updated server DB!');
+	} catch (e) {
+		serverdb = require(serverDBPath)
+		console.error('Failed To Update the server DB: ' + e);
+	}
 };
