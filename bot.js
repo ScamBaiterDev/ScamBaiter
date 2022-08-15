@@ -43,10 +43,7 @@ let lastUpdate = null;
  * @type {{messageID: string;userID: string;guildID: string}[]}
  */
 let lastIdPerGuild = [];
-/**
- * @type {string[]}
- */
-let db = [];
+
 const revision = require('child_process')
 	.execSync('git rev-parse HEAD')
 	.toString()
@@ -94,10 +91,10 @@ sock.onmessage = (/** @type {{ data: WebSocket.Data; }} */ message) => {
 	const data = JSON.parse(message.data);
 	if (data.type === 'add') {
 		// Get all the entries in 'data.domains' array and push to db
-		db.push(...data.domains);
+		scamdb.push(...data.domains);
 	} else if (data.type === 'delete') {
 		// Get all the entries in 'data.domains' array and remove from db
-		db = db.filter(item => !data.domains.includes(item));
+		scamdb = scamdb.filter(item => !data.domains.includes(item));
 	}
 };
 
@@ -167,7 +164,7 @@ client.on('interactionCreate', async (interaction) => {
 			)}:D> <t:${Math.floor(
 				startup.getTime() / 1000
 			)}:T>
-					Current DB size: ${db.length.toString()}
+					Current DB size: ${scamdb.length.toString()}
 					Last Database Update: <t:${Math.floor(
 				lastUpdate.getTime() / 1000
 			)}:R>
@@ -227,7 +224,7 @@ client.on('interactionCreate', async (interaction) => {
 					const splited = removeEndingSlash.split('.');
 					const domain =
 						splited[splited.length - 2] + '.' + splited[splited.length - 1];
-				if (db.includes(domain)) scamURLsFound.push(domain);
+				if (scamdb.includes(domain)) scamURLsFound.push(domain);
 			});
 			if (scamURLsFound.length === 0) await interaction.reply(`\`\`\`${textToCheck}\`\`\` \n Contains no scams`);
 			else if (scamURLsFound.length === 1) await interaction.reply(`${scamURLsFound[0]} is a scam`)
@@ -315,7 +312,7 @@ client.on('messageCreate', async (message) => {
 				splited[splited.length - 2] + '.' + splited[splited.length - 1];
 
 			// check if domain is in db
-			if (db.includes(domain) || db.includes(removeEndingSlash)) {
+			if (scamdb.includes(domain) || scamdb.includes(removeEndingSlash)) {
 				isScam = true;
 				scamDomain = domain;
 				break;
@@ -438,7 +435,7 @@ client.on('messageCreate', async (message) => {
 			)}:D> <t:${Math.floor(
 				startup.getTime() / 1000
 			)}:T>
-			Current DB size: ${db.length.toString()}
+			Current DB size: ${scamdb.length.toString()}
 			Last Database Update: <t:${Math.floor(
 				lastUpdate.getTime() / 1000
 			)}:R>
@@ -503,7 +500,7 @@ client.on('messageCreate', async (message) => {
 					const splited = removeEndingSlash.split('.');
 					const domain =
 						splited[splited.length - 2] + '.' + splited[splited.length - 1];
-				if (db.includes(domain)) scamURLsFound.push(domain);
+				if (scamdb.includes(domain)) scamURLsFound.push(domain);
 			});
 			if (scamURLsFound.length === 0) await message.reply(`\`\`\`${textToCheck}\`\`\` \n Contains no scams`);
 			else if (scamURLsFound.length === 1) await message.reply(`${scamURLsFound[0]} is a scam`)
