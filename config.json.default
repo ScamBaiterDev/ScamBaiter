@@ -18,6 +18,7 @@
 	"owners": ["your user ID here"],
 	"scams": {
 		"scamApi": "https://phish.sinking.yachts/v2/all",
+		"serverApi": "https://api.phish.gg/servers/all",
 		"scamSocket": "wss://phish.sinking.yachts/feed"
 	},
 	"inviteMsg": "Replace with bot invite URL/message"
