@@ -164,7 +164,8 @@ client.on('interactionCreate', async (interaction) => {
 			)}:D> <t:${Math.floor(
 				startup.getTime() / 1000
 			)}:T>
-					Current DB size: ${scamdb.length.toString()}
+					Current Link DB size: ${scamdb.length.toString()}
+					Current Server DB size ${serverdb.length.toString()}
 					Last Database Update: <t:${Math.floor(
 				lastUpdate.getTime() / 1000
 			)}:R>
@@ -435,7 +436,8 @@ client.on('messageCreate', async (message) => {
 			)}:D> <t:${Math.floor(
 				startup.getTime() / 1000
 			)}:T>
-			Current DB size: ${scamdb.length.toString()}
+			Current Link DB size: ${scamdb.length.toString()}
+			Current Server DB size ${serverdb.length.toString()}
 			Last Database Update: <t:${Math.floor(
 				lastUpdate.getTime() / 1000
 			)}:R>
