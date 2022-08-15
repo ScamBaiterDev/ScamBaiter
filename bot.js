@@ -514,6 +514,7 @@ client.on('messageCreate', async (message) => {
 client.login(config.discord.token).catch((err) => console.error(err));
 
 const updateDb = async () => {
+	// Code for updating SCAMDB
 	try {
 		let scamAPIRESP = await axios.get(config.scams.scamApi, {
 			headers: {
@@ -530,6 +531,8 @@ const updateDb = async () => {
 		scamdb = require(urlDBPath);
 		console.error('Failed To Update the scam DB: ' + e);
 	}
+
+	// Code for updating SERVER db
 	try {
 		let serverAPIRESP = await axios.get(config.scams.serverApi, {
 			headers: {
