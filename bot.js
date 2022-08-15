@@ -28,11 +28,11 @@ const DiscordInviteLinkRegex = /(?:^|\b)discord(?:(?:app)?\.com\/invite|\.gg(?:\
 
 // Variables used throughout code
 /**
- * @type {string[]}
+ * @type {{match: boolean; reason: string; serverID: string;}[]}
  */
 let serverdb = [];
 /**
- * @type {{match: boolean; reason: string; serverID: string;}[]}
+ * @type {string[]}
  */
 let scamdb = [];
 /**
@@ -247,7 +247,7 @@ client.on('messageCreate', async (message) => {
 		const inviteCode = invites.groups.code;
 		const serverID = await client.fetchInvite(inviteCode).then((invite) => invite.guild?.id);
 
-		scamdb.forEach(async (invite) => {
+		serverdb.forEach(async (invite) => {
 			if (serverID !== invite.serverID) return;
 			if (message.deletable) await message.delete();
 
