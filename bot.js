@@ -504,7 +504,8 @@ client.on('messageCreate', async (message) => {
 			 * @type {string[]}
 			 */
 			const scamURLsFound = [];
-			urlRegexResults.forEach((result) => {
+			uniqueUrls.forEach((result) => {
+				if (result === undefined) return;
 				const removeEndingSlash = result.split('/')[2];
 					if (removeEndingSlash === undefined) return message.reply('Please provide a valid URL');
 					const splited = removeEndingSlash.split('.');
