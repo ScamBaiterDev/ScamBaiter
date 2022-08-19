@@ -208,18 +208,24 @@ client.on('interactionCreate', async (interaction) => {
 		case 'check': {
 			const textToCheck = interaction.options.getString('text_to_check', true);
 
-			const urlRegexResults = urlRegex.exec(textToCheck);
+			// Check textToCheck for URLs
+			const urlRegexResults = textToCheck.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
+
+			// const urlRegexResults = urlRegex.exec(textToCheck);
 			if (urlRegexResults === null) {
 				await interaction.reply('No URLs found to check');
 				return;
 			}
 
+			// Remove duplicates from urlRegexResults
+			const uniqueUrls = [...new Set(urlRegexResults)];
 
 			/**
 			 * @type {string[]}
 			 */
 			const scamURLsFound = [];
-			urlRegexResults.forEach((result) => {
+			uniqueUrls.forEach((result) => {
+				if (result === undefined) return;
 				const removeEndingSlash = result.split('/')[2];
 					if (removeEndingSlash === undefined) return interaction.reply('Please provide a valid URL');
 					const splited = removeEndingSlash.split('.');
@@ -227,6 +233,7 @@ client.on('interactionCreate', async (interaction) => {
 						splited[splited.length - 2] + '.' + splited[splited.length - 1];
 				if (scamdb.includes(domain)) scamURLsFound.push(domain);
 			});
+			console.log(scamURLsFound, urlRegexResults);
 			if (scamURLsFound.length === 0) await interaction.reply(`\`\`\`${textToCheck}\`\`\` \n Contains no scams`);
 			else if (scamURLsFound.length === 1) await interaction.reply(`${scamURLsFound[0]} is a scam`)
 			else await interaction.reply(`The following domains are scams: ${scamURLsFound.join(', ')}`);
@@ -485,12 +492,13 @@ client.on('messageCreate', async (message) => {
 				return;
 			}
 
-			const urlRegexResults = urlRegex.exec(textToCheck);
+			const urlRegexResults = textToCheck.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
 			if (urlRegexResults === null) {
 				await message.reply('No URLs found to check');
 				return;
 			}
 
+			const uniqueUrls = [...new Set(urlRegexResults)];
 
 			/**
 			 * @type {string[]}
