@@ -63,9 +63,9 @@ export const checkForScamInvites = async (client: Client, content: string): Prom
 
 const reportHook = new WebhookClient({ url: config.discord.reportHook })
 
-export const checkMessageContent = async (message: Message, content: string) => {
-  const scamLinks = checkForScamLinks(content);
-  const scamInvites = await checkForScamInvites(message.client, content);
+export const checkMessageContent = async (message: Message) => {
+  const scamLinks = checkForScamLinks(message.content);
+  const scamInvites = await checkForScamInvites(message.client, message.content);
   if (scamLinks.length > 0 || scamInvites.badInvites !== undefined) {
     if (message.deletable) message.delete();
 

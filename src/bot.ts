@@ -85,9 +85,11 @@ bot.on('messageCreate', async message => {
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const cmd = args.shift()?.toLowerCase();
 
-  const contentCheckResult = await checkMessageContent(message, message.content);
-  const attachmentCheckResult = await checkAttachments(message);
-  if (contentCheckResult || attachmentCheckResult) return;
+  if (cmd !== 'check') {
+    const contentCheckResult = await checkMessageContent(message);
+    const attachmentCheckResult = await checkAttachments(message);
+    if (contentCheckResult || attachmentCheckResult) return;
+  }
 
   // Check if command exists
   const command = commands.find(command => command.data.name === cmd);
