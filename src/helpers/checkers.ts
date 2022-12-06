@@ -1,5 +1,5 @@
 import { DiscordInviteLinkRegex, urlRegex } from ".";
-import { scamDB, serverDB } from "../bot";
+import { lastIdPerGuild, scamDB, serverDB } from "../bot";
 import { Client, EmbedBuilder, Message, WebhookClient } from 'discord.js'
 import Jimp from "jimp";
 import jsQR from "jsqr";
@@ -68,6 +68,26 @@ export const checkMessageContent = async (message: Message) => {
   const scamInvites = await checkForScamInvites(message.client, message.content);
   if (scamLinks.length > 0 || scamInvites.badInvites !== undefined) {
     if (message.deletable) message.delete();
+
+    if (
+      lastIdPerGuild.find(
+        (data) =>
+          data.userID === message.member?.id && data.guildID === message.guild?.id
+      )
+    ) {
+      // Remove the element from the array
+      const fitlered = lastIdPerGuild.filter((data) => data.messageID !== message.id);
+      lastIdPerGuild.length = 0;
+      lastIdPerGuild.push(...fitlered);
+      return;
+    } else {
+      // If the message is not in the array, add it
+      lastIdPerGuild.push({
+        messageID: message.id,
+        userID: message.author.id,
+        guildID: message.guild?.id ?? '',
+      });
+    }
 
     const embed = new EmbedBuilder()
       .setAuthor({

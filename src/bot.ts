@@ -21,7 +21,7 @@ process.on("message", (msg: MessageData) => {
 
 export let scamDB: string[] = [];
 export let serverDB: serverDBData = [];
-let lastIdPerGuild: {
+export let lastIdPerGuild: {
   messageID: string;
   userID: string;
   guildID: string;

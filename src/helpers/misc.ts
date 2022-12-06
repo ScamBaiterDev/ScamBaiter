@@ -59,7 +59,8 @@ export const updateDatabase = async (scamDB: string[], serverDB: serverDBData) =
   });
   const scamAPIResponseData: string[] = await scamAPIResponse.json();
   await fs.writeFile(urlDBPath, JSON.stringify(scamAPIResponseData, null, 2));
-  scamDB = scamAPIResponseData;
+  scamDB.length = 0;
+  scamDB.push(...scamAPIResponseData);
 
   // Update Server DB
   const serverAPIResponse = await fetch(config.scams.serverApi, {
@@ -69,5 +70,6 @@ export const updateDatabase = async (scamDB: string[], serverDB: serverDBData) =
   });
   const serverAPIResponseData = await serverAPIResponse.json() as serverDBData;
   await fs.writeFile(serverDBPath, JSON.stringify(serverAPIResponseData, null, 2));
-  serverDB = serverAPIResponseData;
+  serverDB.length = 0;
+  serverDB.push(...serverAPIResponseData);
 };
