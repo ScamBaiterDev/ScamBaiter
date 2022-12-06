@@ -1,25 +1,7 @@
 import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder, Client, EmbedBuilder } from "discord.js";
-import * as config from '../../config.json';
-import { scamDB } from "../bot";
-import { urlRegex } from "../helpers";
+import { checkForScamLinks } from "../helpers";
 
 import type { Command } from "../types";
-
-const checkForScamLinks = (urls: string): string[] => {
-  const matches = urls.match(urlRegex);
-  if (matches === null) return [];
-
-  // Remove duplicates from urlRegexResults
-  const uniqueUrls = [...new Set(matches)];
-  return uniqueUrls.map((url) => {
-    const removeEndingSlash = url.split('/')[2];
-    if (removeEndingSlash === undefined) return;
-    const splited = removeEndingSlash.split('.');
-    const domain =
-      splited[splited.length - 2] + '.' + splited[splited.length - 1];
-    if (scamDB.includes(domain)) return domain;
-  }).filter((domain) => domain !== undefined) as string[];
-};
 
 export default {
   data: new SlashCommandBuilder()
