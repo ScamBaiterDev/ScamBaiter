@@ -1,12 +1,9 @@
 import path from "node:path";
 import fs from "node:fs/promises"
-import { Command, serverDBData } from "./types";
-import * as config from '../config.json';
+import { Command, serverDBData } from "../types";
+import * as config from '../../config.json';
 import { REST, Routes } from "discord.js";
-import { scamDB } from "./bot";
 
-export const urlRegex = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g;
-export const DiscordInviteLinkRegex = /(?:^|\b)discord(?:(?:app)?\.com\/invite|\.gg(?:\/invite)?)\/(?<code>[\w-]{2,255})(?:$|\b)/gi;
 export const revision: string = require("child_process")
   .execSync("git rev-parse HEAD")
   .toString()
@@ -73,20 +70,4 @@ export const updateDatabase = async (scamDB: string[], serverDB: serverDBData) =
   const serverAPIResponseData = await serverAPIResponse.json() as serverDBData;
   await fs.writeFile(serverDBPath, JSON.stringify(serverAPIResponseData, null, 2));
   serverDB = serverAPIResponseData;
-};
-
-export const checkForScamLinks = (urls: string): string[] => {
-  const matches = urls.match(urlRegex);
-  if (matches === null) return [];
-
-  // Remove duplicates from urlRegexResults
-  const uniqueUrls = [...new Set(matches)];
-  return uniqueUrls.map((url) => {
-    const removeEndingSlash = url.split('/')[2];
-    if (removeEndingSlash === undefined) return;
-    const splited = removeEndingSlash.split('.');
-    const domain =
-      splited[splited.length - 2] + '.' + splited[splited.length - 1];
-    if (scamDB.includes(domain)) return domain;
-  }).filter((domain) => domain !== undefined) as string[];
 };

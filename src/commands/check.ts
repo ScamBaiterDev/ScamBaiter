@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder, Client, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder } from "discord.js";
 import { checkForScamLinks } from "../helpers";
 
 import type { Command } from "../types";
