@@ -3,9 +3,11 @@ export const startup = new Date();
 import * as Discord from 'discord.js';
 import * as config from '../config.json';
 import { loadCommands, updateDatabase, DiscordInviteLinkRegex, urlRegex, checkForScamLinks } from './helpers';
+import Jimp from 'jimp';
+import { EmbedBuilder } from 'discord.js';
 
 import type { Command, MessageData, ScamWSData, serverDBData } from './types';
-import { EmbedBuilder } from 'discord.js';
+import jsQR from 'jsqr';
 
 process.on("message", (msg: MessageData) => {
   if (!msg.type) return false;
@@ -212,6 +214,22 @@ bot.on('messageCreate', async message => {
       }
     }
   }
+
+  message.attachments.forEach(async (attachment) => {
+    if (!attachment.contentType?.includes('image')) return;
+    const image = await Jimp.read(attachment.url);
+    const code = jsQR(image.bitmap.data as any, image.bitmap.width, image.bitmap.height);
+    if (code === null) return;
+    if (code.data.startsWith('https://discord.com/ra/') || code.data.startsWith('https://discordapp.com/ra/')) {
+      message.reply({
+        'embeds': [{
+          'description': ':warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account',
+        }]
+      }).catch((err) => {
+        if (err && message.deletable) message.delete();
+      });
+    }
+  });
 
   // Check if command exists
   const command = commands.find(command => command.data.name === cmd);
