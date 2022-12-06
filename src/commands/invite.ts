@@ -4,7 +4,7 @@ import * as config from '../../config.json';
 import type { Command } from "../types";
 
 export default {
-  data: new SlashCommandBuilder().setName("update_db").setDescription("Updates database."),
+  data: new SlashCommandBuilder().setName("invite").setDescription("Gets the bot invite link."),
   executeInteraction: function (interaction: ChatInputCommandInteraction<CacheType>) {
     return interaction.reply(config.inviteMsg);
   },
