@@ -2,12 +2,9 @@ export const startup = new Date();
 
 import * as Discord from 'discord.js';
 import * as config from '../config.json';
-import { loadCommands, updateDatabase, DiscordInviteLinkRegex, urlRegex, checkForScamLinks } from './helpers';
-import Jimp from 'jimp';
-import { EmbedBuilder } from 'discord.js';
+import { loadCommands, updateDatabase } from './helpers';
 
 import type { Command, MessageData, ScamWSData, serverDBData } from './types';
-import jsQR from 'jsqr';
 import { checkAttachments, checkMessageContent } from './helpers/checkers';
 
 process.on("message", (msg: MessageData) => {
