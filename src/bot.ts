@@ -3,9 +3,9 @@ export const startup = new Date();
 import * as Discord from 'discord.js';
 import * as config from '../config.json';
 import { loadCommands, updateDatabase } from './helpers';
-
-import type { Command, MessageData, ScamWSData, serverDBData } from './types';
 import { checkAttachments, checkMessageContent } from './helpers/checkers';
+import WebSocket from 'ws';
+import type { Command, MessageData, ScamWSData, serverDBData } from './types';
 
 process.on("message", (msg: MessageData) => {
   if (!msg.type) return false;
@@ -42,14 +42,19 @@ const bot = new Discord.Client({
   ]
 });
 
-const scamSocket = new WebSocket(config.scams.scamSocket);
+const scamSocket = new WebSocket(config.scams.scamSocket, {
+  headers: {
+    "User-Agent": "ScamBaiter/1.0; Chris Chrome#9158",
+    "X-Identity": "ScamBaiter/1.0; Chris Chrome#9158",
+  }
+});
 
 scamSocket.onopen = () => {
   console.log("Connected to scam socket.");
 };
 
 scamSocket.onmessage = (msg) => {
-  const data = JSON.parse(msg.data) as ScamWSData;
+  const data = JSON.parse(msg.data as string) as ScamWSData;
   if (data.type === "add") {
     // Get all the entries in "data.domains" array and push to db
     scamDB.push(...data.domains);

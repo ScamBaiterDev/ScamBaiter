@@ -49,7 +49,7 @@ const embed = (client: Client, guildCacheSize: number[], hostname: string) => ne
   });
 
 export default {
-  data: new SlashCommandBuilder().setName("clientinfo").setDescription("Get information about the client."),
+  data: new SlashCommandBuilder().setName("botinfo").setDescription("Get information about the client."),
   executeInteraction: async function (interaction: ChatInputCommandInteraction<CacheType>) {
     const client = interaction.client;
     const guildCacheSize = await client.shard?.fetchClientValues("guilds.cache.size") as number[] | undefined

@@ -36,9 +36,11 @@ export const checkAttachments = async (message: Message) => {
       }).catch((err) => {
         if (err && message.deletable) message.delete();
       });
+      return true
     }
+
   });
-  return true;
+  return false;
 };
 
 export const checkForScamInvites = async (client: Client, content: string): Promise<{ invite?: string | undefined; badInvites?: serverDBData | undefined; }> => {
@@ -132,8 +134,9 @@ export const checkMessageContent = async (message: Message) => {
         deleteMessageDays: 1
       });
       await message.guild?.bans.remove(message.author.id, 'AntiScam - Softban');
+      return true;
     }
   }
 
-  return true;
+  return false;
 };

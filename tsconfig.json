@@ -2,7 +2,7 @@
   "compilerOptions": {
     "incremental": true, /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
     "tsBuildInfoFile": "./dist/.tsbuildinfo", /* Specify the path to .tsbuildinfo incremental compilation file. */
-    "target": "es2016", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "ESNext", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     "module": "commonjs", /* Specify what module code is generated. */
     // "rootDir": "./src", /* Specify the root folder within your source files. */
     "sourceMap": true, /* Create source map files for emitted JavaScript files. */

@@ -15,13 +15,13 @@ export const serverDBPath = path.join(__dirname, "..", "server_db.json");
 
 export const loadCommands = async () => {
   const commandFiles = (await fs
-    .readdir(path.join(__dirname, "commands")))
+    .readdir(path.join(__dirname, '..', "commands")))
     .filter((file) => file.endsWith(".js"));
 
   const commands: Command[] = [];
 
   for await (const file of commandFiles) {
-    const command = (await import(`./commands/${file}`)).default as Command;
+    const command = (await import(path.join(__dirname, '..', "commands", file))).default as Command;
     commands.push(command);
   }
 

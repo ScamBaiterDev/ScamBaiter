@@ -1,8 +1,9 @@
 import * as Discord from 'discord.js';
 import * as config from '../config.json';
 import type { MessageData } from './types';
+import path from 'node:path';
 
-const manager = new Discord.ShardingManager('./bot.js', {
+const manager = new Discord.ShardingManager(path.join(__dirname, '.', 'bot.js'), {
   token: config.discord.token
 });
 
