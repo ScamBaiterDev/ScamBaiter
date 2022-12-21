@@ -49,10 +49,9 @@ export const checkForScamInvites = async (client: Client, content: string): Prom
     invite: undefined,
     badInvites: undefined
   };
-  const inviteCode = inviteMatches.groups?.code;
+  const inviteCode = inviteMatches[5];
   const serverID = await client.fetchInvite(inviteCode ?? '').then((invite) => invite.guild?.id);
-
-  const badInvites = serverDB.filter(server => server.serverID === serverID);
+  const badInvites = serverDB.filter(server => serverID === server.serverID);
   if (badInvites.length === 0) return {
     invite: undefined,
     badInvites: undefined

@@ -19,7 +19,6 @@ Startup Time: <t:${Math.floor(
 )}:T>
 Current Link DB size: ${scamDB.length}
 Current Server DB size ${serverDB.length}
-)}:R>
 `;
 
 const systemInformationTemplate = (hostname: string) => `
