@@ -20,4 +20,5 @@ npm i
 
 Copy/rename `config.json.default` to `config.json`, then head to the [Discord Developer Portal](https://discord.com/developers/applications) to create a bot user, open `config.json` in your preferred text editor, and fill in the details like bot token and owner user IDs.
 
-Run the bot with `node .`
+Compile the bot with `npm run build`
+Run the bot with `npm run start`
