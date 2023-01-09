@@ -21,7 +21,7 @@
     "axios": "^0.24.0",
     "discord.js": "^14.2.0",
     "jimp": "^0.16.2",
-    "jsqr": "^1.4.0",
+    "qr-scanner": "^1.4.2",
     "ws": "^8.11.0"
   },
   "devDependencies": {
