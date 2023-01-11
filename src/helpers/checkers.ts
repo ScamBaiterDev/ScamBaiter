@@ -25,7 +25,7 @@ export const checkForScamLinks = (urls: string): string[] => {
 export const checkAttachments = async (message: Message) => {
   try {
     message.attachments.forEach(async (attachment) => {
-      if (!attachment.contentType?.includes('image')) return false;
+      if (!attachment.contentType?.includes('image') || attachment.url.endsWith('webp') || attachment.url.endsWith('webm')) return false;
       const image = await Jimp.read(attachment.url);
       
       const code = await qrscanner.scanImage(await createImageBitmap(image.bitmap as any), { returnDetailedScanResult: true });
