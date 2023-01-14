@@ -5,16 +5,7 @@ import * as config from '../config.json';
 import { loadCommands, updateDatabase } from './helpers';
 import { checkAttachments, checkMessageContent } from './helpers/checkers';
 import WebSocket from 'ws';
-import type { Command, MessageData, ScamWSData, serverDBData } from './types';
-
-process.on("message", (msg: MessageData) => {
-  if (!msg.type) return false;
-
-  if (msg.type === "activity") {
-    console.info(msg);
-    bot.user?.setPresence(msg.data);
-  }
-});
+import type { Command, ScamWSData, serverDBData } from './types';
 
 export let scamDB: string[] = [];
 export let serverDB: serverDBData = [];
