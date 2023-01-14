@@ -2,7 +2,7 @@ import { DiscordInviteLinkRegex, urlRegex } from ".";
 import { lastIdPerGuild, scamDB, serverDB } from "../bot";
 import { Client, EmbedBuilder, Message, WebhookClient } from 'discord.js'
 import Jimp from "jimp";
-import jsQR from "jsqr";
+import qrscanner from "qr-scanner";
 import { serverDBData } from '../types';
 import * as config from '../../config.json';
 
@@ -27,7 +27,7 @@ export const checkAttachments = async (message: Message) => {
     message.attachments.forEach(async (attachment) => {
       if (!attachment.contentType?.includes('image') || attachment.url.endsWith('webp') || attachment.url.endsWith('webm')) return false;
       const image = await Jimp.read(attachment.url);
-      
+
       const code = await qrscanner.scanImage(await createImageBitmap(image.bitmap as any), { returnDetailedScanResult: true });
       if (code.data.startsWith('https://discord.com/ra/') || code.data.startsWith('https://discordapp.com/ra/')) {
         message.reply({
