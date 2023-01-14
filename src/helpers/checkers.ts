@@ -24,29 +24,31 @@ export const checkForScamLinks = (urls: string): string[] => {
 
 export const checkAttachments = async (message: Message) => {
   try {
-    message.attachments.forEach(async (attachment) => {
+    const isScam = message.attachments.some(async (attachment) => {
       if (!attachment.contentType?.includes('image') || attachment.url.endsWith('webp') || attachment.url.endsWith('webm')) return false;
       const image = await Jimp.read(attachment.url);
-
       const code = await qrscanner.scanImage(await createImageBitmap(image.bitmap as any), { returnDetailedScanResult: true });
       if (code.data.startsWith('https://discord.com/ra/') || code.data.startsWith('https://discordapp.com/ra/')) {
-        message.reply({
-          'embeds': [{
-            'description': ':warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account',
-          }]
-        }).catch((err) => {
-          if (err && message.deletable) message.delete();
-        });
         return true
       }
     });
 
-    return false;
+    if (isScam) {
+      message.reply({
+        'embeds': [{
+          'description': ':warning: POSSIBLE SCAM DETECTED :warning:\n\nThe image above contains a Discord Login QR code.\nScanning this code with the Discord app will give whoever made the code FULL ACCESS to your account',
+        }]
+      }).catch((err) => {
+        if (err && message.deletable) message.delete();
+      });
+    }
+    return isScam;
   } catch (err) {
     console.error("Error while checking attachments: ", err);
     return false
   }
 };
+
 
 export const checkForScamInvites = async (client: Client, content: string): Promise<{ invite?: string | undefined; badInvites?: serverDBData | undefined; }> => {
   const inviteMatches = content.match(DiscordInviteLinkRegex);
