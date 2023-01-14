@@ -1,5 +1,5 @@
 import type { Client } from "discord.js";
-import { serverDB } from "../../bot";
+import { serverDB } from "../..";
 import type { serverDBData } from "../../types";
 import { DiscordInviteLinkRegex } from "../regex";
 

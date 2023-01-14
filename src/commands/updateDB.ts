@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder } 
 import * as config from '../../config.json';
 
 import type { Command } from "../types";
-import { scamDB, serverDB } from "../bot";
+import { scamDB, serverDB } from "..";
 import { updateDatabase } from "../helpers";
 
 export default {

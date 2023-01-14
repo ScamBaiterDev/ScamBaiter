@@ -1,5 +1,5 @@
 import { urlRegex } from "../index";
-import { scamDB } from '../../bot';
+import { scamDB } from '../..';
 
 export const checkForScamLinks = (urls: string): string[] => {
   const uniqueUrls = extractUrls(urls);

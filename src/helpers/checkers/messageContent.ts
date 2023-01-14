@@ -1,6 +1,6 @@
 import { WebhookClient, Message, EmbedBuilder } from "discord.js";
 import config from "../../../config.json";
-import { lastIdPerGuild } from "../../bot";
+import { lastIdPerGuild } from "../..";
 import type { serverDBData } from "../../types";
 import { checkForScamInvites } from "./invites";
 import { checkForScamLinks } from "./links";
