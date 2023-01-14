@@ -60,6 +60,11 @@ bot.once('ready', async () => {
 
   commands = await loadCommands()
   await updateDatabase(scamDB, serverDB);
+
+  bot.user?.setPresence({
+    status: config.discord.status.status as Discord.PresenceStatusData,
+    activities: config.discord.status.activities as unknown as Discord.ActivitiesOptions[]
+  });
 });
 
 bot.on('interactionCreate', async interaction => {
