@@ -1,31 +1,34 @@
 import { WebhookClient, Message, EmbedBuilder } from "discord.js";
 import config from "../../../config.json";
 import { lastIdPerGuild } from "../..";
-import type { serverDBData } from "../../types";
 import { checkForScamInvites } from "./invites";
-import { checkForScamLinks } from "./links";
+import { checkForScamLinks } from './links';
 
 const reportHook = new WebhookClient({ url: config.discord.reportHook })
 
 export const checkMessageContent = async (message: Message) => {
-  const { scamLinks, scamInvites } = await extractScamData(message);
-  if (!scamLinks || !scamInvites) return false;
+  try {
+    const { scamLinks, scamInvites } = await extractScamData(message);
+    if (!scamLinks || !scamInvites.badInvites) return false;
 
-  if (message.deletable) message.delete();
+    if (message.deletable) message.delete();
 
-  const isUserInHistory = handleUserHistory(message);
-  if (isUserInHistory) return;
+    const isUserInHistory = handleUserHistory(message);
+    if (isUserInHistory) return;
 
-  const embed = createEmbed(message, scamLinks, scamInvites);
-  await reportHook.send({ embeds: [embed] });
+    const embed = createEmbed(message, scamLinks, scamInvites);
+    await reportHook.send({ embeds: [embed] });
 
-  if (shouldBanUser(message)) {
-    await softbanUser(message);
-    return true;
-  }
+    if (shouldBanUser(message)) {
+      await softbanUser(message);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.log(JSON.stringify(error, null, 2));
+  };
   return false;
-
-};
+}
 
 const extractScamData = async (message: Message) => {
   const scamInvites = await checkForScamInvites(message.client, message.content);
@@ -55,7 +58,8 @@ const handleUserHistory = (message: Message) => {
   return false;
 };
 
-const createEmbed = (message: Message, scamLinks: string[], scamInvites: { invite?: string | undefined; badInvites?: serverDBData | undefined; }) => {
+const createEmbed = (message: Message, scamLinks: string[], scamInvites: Awaited<ReturnType<typeof checkForScamInvites>>) => {
+  console.log(scamInvites, scamLinks)
   const embed = new EmbedBuilder()
     .setAuthor({
       name: message.guild?.name ?? '',
@@ -69,7 +73,7 @@ const createEmbed = (message: Message, scamLinks: string[], scamInvites: { invit
         : ' | Not Softbanned'
         }`
     })
-    .setFields(
+    .setFields([
       {
         name: 'User',
         value: `${message.author} (${message.author.tag})\nID: ${message.author.id}`,
@@ -82,8 +86,7 @@ const createEmbed = (message: Message, scamLinks: string[], scamInvites: { invit
         name: scamInvites.badInvites !== undefined ? 'Invite' : 'Links',
         value: scamInvites.badInvites !== undefined ? `https://discord.gg/${scamInvites.invite}` : scamLinks.join('\n'),
       }
-    )
-    .setTimestamp(new Date());
+    ]).setTimestamp(new Date());
 
   return embed;
 }
