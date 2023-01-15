@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder, Client, EmbedBuilder } from "discord.js";
-import * as config from '../../config.json';
+import config from '../../config.json';
 import os from 'node:os';
 
 import type { Command } from "../types";

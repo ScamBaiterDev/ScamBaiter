@@ -1,7 +1,7 @@
 export const startup = new Date();
 
-import * as Discord from 'discord.js';
-import * as config from '../config.json';
+import Discord from 'discord.js';
+import config from '../config.json';
 import { loadCommands, updateDatabase } from './helpers';
 import { checkAttachments, checkMessageContent } from './helpers/checkers';
 import WebSocket from 'ws';

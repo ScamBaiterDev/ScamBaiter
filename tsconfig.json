@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "importsNotUsedAsValues": "error",
-    "incremental": true,
+    "incremental": false,
     "lib": [
       "esnext"
     ],
@@ -34,9 +34,10 @@
     "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
   },
-  "exclude": [
+  "include": [
+    "src/**/*",
     "config.json"
-  ]
+  ],
 }
