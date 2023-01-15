@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs/promises"
-import { Command, serverDBData } from "../types";
-import * as config from '../../config.json';
+import type { Command, serverDBData } from "../types";
+import config from '../../config.json';
 import { REST, Routes } from "discord.js";
 
 export const revision: string = require("child_process")

@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder } from "discord.js";
-import * as config from '../../config.json';
+import config from '../../config.json';
 
 import type { Command } from "../types";
 

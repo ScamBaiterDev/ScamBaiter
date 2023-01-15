@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction, CacheType, Message, SlashCommandBuilder } from "discord.js";
-import * as config from '../../config.json';
+import config from '../../config.json';
 
 import type { Command } from "../types";
-import { scamDB, serverDB } from "../bot";
+import { scamDB, serverDB } from "..";
 import { updateDatabase } from "../helpers";
 
 export default {

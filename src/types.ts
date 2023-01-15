@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, Message, PresenceData, SlashCommandBuilder } from "discord.js";
+import type { ChatInputCommandInteraction, Message, PresenceData, SlashCommandBuilder } from "discord.js";
 
 export type MessageData = {
   type: string;
