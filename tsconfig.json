@@ -33,7 +33,8 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": false,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "outDir": "./dist"
   },
   "exclude": [
     "config.json"
