@@ -59,7 +59,6 @@ const handleUserHistory = (message: Message) => {
 };
 
 const createEmbed = (message: Message, scamLinks: string[], scamInvites: Awaited<ReturnType<typeof checkForScamInvites>>) => {
-  console.log(scamInvites, scamLinks)
   const embed = new EmbedBuilder()
     .setAuthor({
       name: message.guild?.name ?? '',
