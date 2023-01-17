@@ -11,9 +11,8 @@ export const checkForScamInvites = async (client: Client, content: string): Prom
   if (!serverID) return { invite: undefined, badInvites: undefined };
 
   const badInvites = filterBadInvites(serverID);
-  if (!badInvites) return { invite: undefined, badInvites: undefined };
-
-  return { invite: inviteCode, badInvites };
+  if (badInvites != null && badInvites.length > 0) return { invite: inviteCode, badInvites }
+  return { invite: undefined, badInvites: undefined };
 };
 
 const extractInviteCode = (content: string): string | undefined => {

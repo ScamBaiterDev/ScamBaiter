@@ -7,26 +7,21 @@ import { checkForScamLinks } from './links';
 const reportHook = new WebhookClient({ url: config.discord.reportHook })
 
 export const checkMessageContent = async (message: Message) => {
-  try {
-    const { scamLinks, scamInvites } = await extractScamData(message);
-    if (!scamLinks || !scamInvites.badInvites) return false;
+  const { scamLinks, scamInvites } = await extractScamData(message);
+  if (!scamLinks || !scamInvites.badInvites) return false;
 
-    if (message.deletable) message.delete();
+  if (message.deletable) message.delete();
 
-    const isUserInHistory = handleUserHistory(message);
-    if (isUserInHistory) return;
+  const isUserInHistory = handleUserHistory(message);
+  if (isUserInHistory) return;
 
-    const embed = createEmbed(message, scamLinks, scamInvites);
-    await reportHook.send({ embeds: [embed] });
+  const embed = createEmbed(message, scamLinks, scamInvites);
+  await reportHook.send({ embeds: [embed] });
 
-    if (shouldBanUser(message)) {
-      await softbanUser(message);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.log(JSON.stringify(error, null, 2));
-  };
+  if (shouldBanUser(message)) {
+    await softbanUser(message);
+    return true;
+  }
   return false;
 }
 
